@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin AllergoZymeLabel — Connexion</title>
+  <style>
+    body {
+      margin:0; height:100vh; display:flex; align-items:center; justify-content:center;
+      background:linear-gradient(135deg,#fff,#f7f7f7);
+      font-family:'Segoe UI',sans-serif;
+    }
+    .login-box {
+      background:#fff; border:1px solid #eee; border-radius:16px;
+      box-shadow:0 6px 20px rgba(201,162,39,0.3);
+      padding:32px; width:360px; text-align:center;
+    }
+    .login-box h1 { color:#c9a227; margin-bottom:20px; font-size:22px; }
+    .login-box label { display:block; text-align:left; margin-top:12px; font-weight:600; }
+    .login-box input {
+      width:100%; padding:10px; margin-top:4px; border:1px solid #ddd;
+      border-radius:8px; background:#f9f9f9;
+    }
+    .login-box button {
+      margin-top:20px; width:100%; padding:12px; border:none; border-radius:8px;
+      background:#c9a227; color:#fff; font-size:16px; font-weight:700; cursor:pointer;
+    }
+    .error { color:#e53935; margin-top:12px; font-size:14px; }
+  </style>
+</head>
+<body>
+  <div class="login-box">
+    <h1>Accès Admin</h1>
+    <label>Email</label>
+    <input type="email" id="email">
+    <label>Mot de passe</label>
+    <input type="password" id="password">
+    <label>Code secret</label>
+    <input type="text" id="code">
+    <button onclick="login()">Connexion</button>
+    <div id="error" class="error"></div>
+  </div>
+
+  <script>
+    function login() {
+      const email = document.getElementById('email').value.trim();
+      const pass = document.getElementById('password').value.trim();
+      const code = document.getElementById('code').value.trim();
+
+      if(email==="elosyboy@gmail.com" && pass==="Elosygang11@" && code==="10111528") {
+        localStorage.setItem("admin_logged", "true");
+        window.location.href = "admin.html";
+      } else {
+        document.getElementById("error").innerText="Identifiants incorrects.";
+      }
+    }
+  </script>
+</body>
+</html>

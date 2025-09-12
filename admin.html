@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>AllergoZymeLabel — Admin</title>
+
+<!-- Leaflet + Esri -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/esri-leaflet"></script>
+<link rel="stylesheet" href="https://unpkg.com/esri-leaflet-geocoder/dist/esri-leaflet-geocoder.css">
+<script src="https://unpkg.com/esri-leaflet-geocoder"></script>
+
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+:root{--gold:#c9a227;--gray:#f7f7f7;--black:#111;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family:'Segoe UI',Roboto,Arial,sans-serif;
+  display:grid;
+  grid-template-columns:320px 1fr 360px;
+  grid-template-rows:100vh;
+  background:#fff;color:var(--black);
+}
+.left-panel,.right-panel{background:var(--gray);padding:18px;overflow-y:auto;}
+#map{width:100%;height:100%;}
+
+.title{color:var(--gold);font-weight:800;font-size:18px;margin-bottom:8px;}
+label{font-weight:600;margin-top:10px;display:block;}
+input,textarea,select{width:100%;padding:10px;border:1px solid #ccc;
+  border-radius:8px;background:#fff;margin-top:4px;}
+.row{display:flex;gap:10px;}
+.row>div{flex:1;}
+.actions{display:flex;gap:10px;margin-top:14px;}
+.btn{padding:10px 14px;border:none;border-radius:8px;cursor:pointer;font-weight:700;}
+.btn-primary{background:var(--gold);color:#fff;}
+.btn-ghost{background:#fff;border:1px solid #ddd;}
+.right-head{display:flex;gap:10px;align-items:center;margin-bottom:12px;}
+.right-head input{flex:1;}
+.logout{margin-left:auto;}
+.place-item{
+  background:#fff;border-radius:12px;padding:12px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.06);display:flex;gap:12px;margin-bottom:10px;
+}
+.place-thumb{
+  width:76px;height:76px;border-radius:8px;object-fit:cover;
+  background:#eee;flex:0 0 76px;
+}
+.place-body{flex:1;}
+.place-body strong{color:var(--gold);font-size:15px;display:block;}
+.place-body small{color:#666;display:block;margin:2px 0 6px;}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;}
+.chip{border:1px solid var(--gold);color:var(--gold);
+  border-radius:999px;padding:4px 8px;font-size:12px;}
+.chip.on{background:var(--gold);color:#fff;}
+.place-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.btn-green{background:#4caf50;color:#fff;}
+.btn-red{background:#e53935;color:#fff;}
+.btn-blue{background:#1976d2;color:#fff;}
+.leaflet-popup-content{font-size:14px;}
+</style>
+</head>
+<body>
+
+<!-- Formulaire -->
+<aside class="left-panel">
+  <div class="title">Ajouter / Modifier</div>
+  <form id="placeForm">
+    <label>Nom de l’établissement</label>
+    <input id="nom" required placeholder="Ex : Boulangerie Dorée"/>
+    <label>Commentaire</label>
+    <textarea id="commentaire" rows="3" placeholder="Description ou avis…"></textarea>
+    <label>Photo(s)</label>
+    <input type="file" id="photo" accept="image/*" multiple/>
+
+    <label>Adresse (cliquez ou saisissez manuellement)</label>
+    <input id="adresse" placeholder="Ex : 52 place Paul Albert 83600"/>
+    <div class="row">
+      <div><label>Ville</label><input id="ville"/></div>
+      <div><label>Code postal</label><input id="cp"/></div>
+    </div>
+    <div class="row">
+      <div><label>Pays</label><input id="pays"/></div>
+      <div>
+        <label>Top 20 de la ville</label>
+        <select id="top20"><option value="false">Non</option><option value="true">Oui</option></select>
+      </div>
+    </div>
+
+    <input type="hidden" id="lat"/><input type="hidden" id="lng"/>
+
+    <div class="actions">
+      <button class="btn btn-primary" type="submit">Valider</button>
+      <button class="btn btn-ghost" type="button" id="resetBtn">Réinitialiser</button>
+    </div>
+  </form>
+</aside>
+
+<!-- Carte -->
+<div id="map"></div>
+
+<!-- Liste droite -->
+<aside class="right-panel">
+  <div class="right-head">
+    <input id="search" type="search" placeholder="Rechercher nom, adresse, ville, pays…"/>
+    <button class="btn btn-ghost logout" id="logoutBtn">Déconnexion</button>
+  </div>
+  <div id="placesList"></div>
+</aside>
+
+<script>
+/* ------------ ⚠️  AJOUTEZ VOTRE CLE SUPABASE ICI -----------------
+   const SUPABASE_URL = "https://fcronugfxklwygnchuuu.supabase.co";
+   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjcm9udWdmeGtsd3lnbmNodXV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc3MDg5ODksImV4cCI6MjA3MzI4NDk4OX0.-J89Sbz2POG0ks7oS5odeq3SqKRafA1L8ORl6fHZakk";
+   const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+   ----------------------------------------------------------------- */
+
+/* --- Auth simple --- */
+if(localStorage.getItem("admin_logged")!=="true"){
+  window.location.href="admin-login.html";
+}
+document.getElementById("logoutBtn").onclick=()=>{
+  localStorage.removeItem("admin_logged");
+  window.location.href="admin-login.html";
+};
+
+/* --- Stockage local --- */
+const STORAGE_KEY="allergozyme_places_v3";
+const load=()=>{try{return JSON.parse(localStorage.getItem(STORAGE_KEY))||[];}catch{return[];}};
+const save=list=>localStorage.setItem(STORAGE_KEY,JSON.stringify(list));
+let places=load();
+let editingId=null;
+
+/* --- Carte --- */
+const map=L.map("map").setView([20,0],2);
+L.esri.basemapLayer("Imagery").addTo(map);
+L.esri.basemapLayer("ImageryLabels").addTo(map);
+
+const logoIcon=L.divIcon({
+  html:`<div style="width:48px;height:48px;background:#fff;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    border:2px solid #c9a227;box-shadow:0 4px 12px rgba(0,0,0,0.15);">
+    <img src="logo.png" style="width:28px;height:28px;"/></div>`,
+  iconSize:[48,48],className:""
+});
+
+const geocoder=L.esri.Geocoding.geocodeService();
+let tempMarker=null;
+
+map.on("click",e=>{
+  const {lat,lng}=e.latlng;
+  if(tempMarker) map.removeLayer(tempMarker);
+  tempMarker=L.marker([lat,lng],{icon:logoIcon}).addTo(map);
+  document.getElementById("lat").value=lat;
+  document.getElementById("lng").value=lng;
+  geocoder.reverse().latlng(e.latlng).run((err,res)=>{
+    if(err||!res||!res.address) return;
+    const a=res.address;
+    document.getElementById("adresse").value=[a.Address,a.Postal,a.City,a.Region,a.Country].filter(Boolean).join(" ");
+    document.getElementById("ville").value=a.City||"";
+    document.getElementById("cp").value=a.Postal||"";
+    document.getElementById("pays").value=a.Country||a.CountryCode||"";
+  });
+});
+
+/* --- Utils --- */
+const readFilesAsDataURLs = files =>
+  Promise.all(Array.from(files||[]).map(f=>new Promise(res=>{
+    const r=new FileReader();r.onload=e=>res(e.target.result);r.readAsDataURL(f);
+  })));
+const escapeHTML=s=>(s??"").toString()
+  .replaceAll("&","&amp;").replaceAll("<","&lt;")
+  .replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+const clearForm=()=>{
+  editingId=null;
+  document.getElementById("placeForm").reset();
+  ["lat","lng"].forEach(id=>document.getElementById(id).value="");
+  if(tempMarker){map.removeLayer(tempMarker);tempMarker=null;}
+};
+document.getElementById("resetBtn").onclick=clearForm;
+
+/* --- Enregistrer --- */
+document.getElementById("placeForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const nom=document.getElementById("nom").value.trim();
+  const commentaire=document.getElementById("commentaire").value.trim();
+  const lat=parseFloat(document.getElementById("lat").value);
+  const lng=parseFloat(document.getElementById("lng").value);
+  const adresse=document.getElementById("adresse").value.trim();
+  const ville=document.getElementById("ville").value.trim();
+  const cp=document.getElementById("cp").value.trim();
+  const pays=document.getElementById("pays").value.trim();
+  const top20=document.getElementById("top20").value==="true";
+  if(!nom){alert("Nom requis");return;}
+  if(isNaN(lat)||isNaN(lng)){alert("Cliquez sur la carte pour choisir un emplacement.");return;}
+  const photos=await readFilesAsDataURLs(document.getElementById("photo").files);
+
+  if(editingId){
+    const i=places.findIndex(p=>p.id===editingId);
+    if(i>=0){
+      places[i]={...places[i],nom,commentaire,lat,lng,adresse,ville,cp,pays,top20,
+        photos:photos.length?photos:places[i].photos};
+    }
+    editingId=null;
+  }else{
+    places.push({id:Date.now(),nom,commentaire,lat,lng,adresse,ville,cp,pays,
+      photos,show:true,top20});
+  }
+  save(places);
+  renderList();renderMarkers();clearForm();
+});
+
+/* --- Markers --- */
+let markers=[];
+function renderMarkers(){
+  markers.forEach(m=>map.removeLayer(m));markers=[];
+  places.forEach(p=>{
+    const m=L.marker([p.lat,p.lng],{icon:logoIcon}).addTo(map);
+    const photo=p.photos&&p.photos[0]?`<img src="${p.photos[0]}" style="max-width:200px;border-radius:8px;margin-bottom:6px">`:"";
+    m.bindPopup(`${photo}<b>${escapeHTML(p.nom)}</b><br/><small>${escapeHTML(p.adresse||"")}</small><br/>${escapeHTML(p.commentaire||"")}`);
+    markers.push(m);
+  });
+}
+function cardHTML(p){
+  const thumb=p.photos&&p.photos[0]?`<img class="place-thumb" src="${p.photos[0]}">`:`<div class="place-thumb"></div>`;
+  return `
+    ${thumb}
+    <div class="place-body">
+      <strong>${escapeHTML(p.nom)}</strong>
+      <small>${escapeHTML(p.adresse||"")}</small>
+      <div class="chips">
+        <span class="chip ${p.show?'on':''}">${p.show?'Affiché publiquement':'Masqué'}</span>
+        <span class="chip ${p.top20?'on':''}">${p.top20?'Top 20':'Hors Top 20'}</span>
+      </div>
+      <div class="place-actions">
+        <button class="btn btn-green edit">Modifier</button>
+        <button class="btn btn-red del">Supprimer</button>
+        <button class="btn btn-blue toggle">${p.show?'Retirer de la carte':'Afficher sur la carte'}</button>
+        <button class="btn btn-ghost top20">${p.top20?'Retirer du Top 20':'Ajouter au Top 20'}</button>
+      </div>
+    </div>`;
+}
+function renderList(filtered=null){
+  const list=document.getElementById("placesList");
+  list.innerHTML="";
+  const data=filtered??places;
+  if(!data.length){list.innerHTML="<p style='color:#666'>Aucun établissement.</p>";return;}
+  data.forEach(p=>{
+    const wrap=document.createElement("div");
+    wrap.className="place-item";wrap.innerHTML=cardHTML(p);
+    wrap.querySelector(".edit").onclick=()=>startEdit(p.id);
+    wrap.querySelector(".del").onclick=()=>deletePlace(p.id);
+    wrap.querySelector(".toggle").onclick=()=>toggleShow(p.id);
+    wrap.querySelector(".top20").onclick=()=>toggleTop20(p.id);
+    list.appendChild(wrap);
+  });
+}
+function startEdit(id){
+  const p=places.find(x=>x.id===id);if(!p)return;
+  editingId=id;
+  ["nom","commentaire","adresse","ville","cp","pays"].forEach(k=>document.getElementById(k).value=p[k]||"");
+  document.getElementById("lat").value=p.lat;
+  document.getElementById("lng").value=p.lng;
+  document.getElementById("top20").value=p.top20?"true":"false";
+  if(tempMarker) map.removeLayer(tempMarker);
+  tempMarker=L.marker([p.lat,p.lng],{icon:logoIcon}).addTo(map);
+  map.setView([p.lat,p.lng],16);
+}
+function deletePlace(id){
+  if(!confirm("Supprimer cet établissement ?")) return;
+  places=places.filter(p=>p.id!==id);save(places);
+  renderList();renderMarkers();
+}
+function toggleShow(id){
+  const i=places.findIndex(p=>p.id===id);
+  if(i<0)return;
+  places[i].show=!places[i].show;
+  save(places);renderList();renderMarkers();
+}
+function toggleTop20(id){
+  const i=places.findIndex(p=>p.id===id);
+  if(i<0)return;
+  places[i].top20=!places[i].top20;
+  save(places);renderList();
+}
+
+/* Recherche instantanée */
+document.getElementById("search").addEventListener("input",e=>{
+  const q=e.target.value.trim().toLowerCase();
+  if(!q){renderList();return;}
+  const filtered=places.filter(p=>{
+    const hay=[p.nom,p.commentaire,p.adresse,p.ville,p.cp,p.pays]
+      .map(v=>(v||"").toString().toLowerCase()).join(" ");
+    return hay.includes(q);
+  });
+  renderList(filtered);
+});
+
+renderList();
+renderMarkers();
+</script>
+</body>
+</html>
