@@ -5,21 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>AllergoZymeLabel — Carte mondiale</title>
 
-.bottom-filters{
-  position:fixed;                     /* collé à l’écran, pas à la carte */
-  left:50%;
-  bottom:0;                            /* tout en bas */
-  transform:translateX(-50%);
-  background:rgba(255,255,255,0.92);
-  border-radius:20px;
-  padding:10px 14px;
-  box-shadow:var(--shadow-md);
-  display:flex;
-  flex-wrap:wrap;                      /* si l’écran est trop étroit, passe sur 2 lignes */
-  gap:10px;
-  z-index:1200;
-  backdrop-filter:blur(6px);
-}
 
 <!-- Leaflet -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -210,6 +195,29 @@ footer .contact{
 /* ✅ Ajoute ici (≈ lignes 187-188) */
 html,body{overflow-x:hidden;}    /* supprime la bande blanche latérale */
 footer{margin-bottom:60px;}      /* espace sous les boutons pour éviter qu’ils ne chevauchent le footer */
+
+/* --- Correctif mobile --- */
+html,body {
+  overflow-x: hidden;      /* supprime la bande blanche latérale */
+}
+footer {
+  margin-bottom: 60px;     /* espace sous les boutons pour éviter qu’ils ne chevauchent le footer */
+}
+.bottom-filters {
+  position: fixed;         /* collé à l’écran, pas à la carte */
+  left: 50%;
+  bottom: 0;               /* tout en bas */
+  transform: translateX(-50%);
+  background: rgba(255,255,255,0.92);
+  border-radius: 20px;
+  padding: 10px 14px;
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-wrap: wrap;         /* si l’écran est trop étroit, passe sur 2 lignes */
+  gap: 10px;
+  z-index: 1200;
+  backdrop-filter: blur(6px);
+}
 
 </style>
 </head>
