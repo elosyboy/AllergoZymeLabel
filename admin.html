@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="https://unpkg.com/esri-leaflet-geocoder/dist/esri-leaflet-geocoder.css">
 <script src="https://unpkg.com/esri-leaflet-geocoder"></script>
 
-<!-- Supabase -->
+<!-- Supabase (optionnel) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
@@ -27,15 +27,19 @@ body{
 }
 .left-panel,.right-panel{background:var(--gray);padding:18px;overflow-y:auto;}
 #map{width:100%;height:100%;}
-
-.title{color:var(--gold);font-weight:800;font-size:18px;margin-bottom:8px;}
+.title{color:var(--gold);font-weight:800;font-size:18px;margin-bottom:10px;}
 label{font-weight:600;margin-top:10px;display:block;}
-input,textarea,select{width:100%;padding:10px;border:1px solid #ccc;
-  border-radius:8px;background:#fff;margin-top:4px;}
+input,textarea,select{
+  width:100%;padding:10px;border:1px solid #ccc;
+  border-radius:8px;background:#fff;margin-top:4px;font-size:14px;
+}
 .row{display:flex;gap:10px;}
 .row>div{flex:1;}
-.actions{display:flex;gap:10px;margin-top:14px;}
-.btn{padding:10px 14px;border:none;border-radius:8px;cursor:pointer;font-weight:700;}
+.actions{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;}
+.btn{
+  padding:10px 14px;border:none;border-radius:8px;cursor:pointer;
+  font-weight:700;font-size:14px;
+}
 .btn-primary{background:var(--gold);color:#fff;}
 .btn-ghost{background:#fff;border:1px solid #ddd;}
 .right-head{display:flex;gap:10px;align-items:center;margin-bottom:12px;}
@@ -43,7 +47,8 @@ input,textarea,select{width:100%;padding:10px;border:1px solid #ccc;
 .logout{margin-left:auto;}
 .place-item{
   background:#fff;border-radius:12px;padding:12px;
-  box-shadow:0 2px 8px rgba(0,0,0,0.06);display:flex;gap:12px;margin-bottom:10px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.06);
+  display:flex;gap:12px;margin-bottom:10px;
 }
 .place-thumb{
   width:76px;height:76px;border-radius:8px;object-fit:cover;
@@ -53,10 +58,12 @@ input,textarea,select{width:100%;padding:10px;border:1px solid #ccc;
 .place-body strong{color:var(--gold);font-size:15px;display:block;}
 .place-body small{color:#666;display:block;margin:2px 0 6px;}
 .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;}
-.chip{border:1px solid var(--gold);color:var(--gold);
-  border-radius:999px;padding:4px 8px;font-size:12px;}
+.chip{
+  border:1px solid var(--gold);color:var(--gold);
+  border-radius:999px;padding:4px 8px;font-size:12px;
+}
 .chip.on{background:var(--gold);color:#fff;}
-.place-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.place-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
 .btn-green{background:#4caf50;color:#fff;}
 .btn-red{background:#e53935;color:#fff;}
 .btn-blue{background:#1976d2;color:#fff;}
@@ -65,18 +72,30 @@ input,textarea,select{width:100%;padding:10px;border:1px solid #ccc;
 </head>
 <body>
 
-<!-- Formulaire -->
+<!-- ========= Formulaire ========= -->
 <aside class="left-panel">
-  <div class="title">Ajouter / Modifier</div>
+  <div class="title">Ajouter / Modifier un établissement</div>
   <form id="placeForm">
     <label>Nom de l’établissement</label>
     <input id="nom" required placeholder="Ex : Boulangerie Dorée"/>
+
+    <label>Type d’établissement</label>
+    <select id="type" required>
+      <option value="">— Choisir —</option>
+      <option value="restaurant">Restaurant</option>
+      <option value="snack">Snack</option>
+      <option value="boulangerie">Boulangerie</option>
+      <option value="bar">Bar</option>
+      <option value="autre">Autre</option>
+    </select>
+
     <label>Commentaire</label>
     <textarea id="commentaire" rows="3" placeholder="Description ou avis…"></textarea>
+
     <label>Photo(s)</label>
     <input type="file" id="photo" accept="image/*" multiple/>
 
-    <label>Adresse (cliquez ou saisissez manuellement)</label>
+    <label>Adresse (cliquez sur la carte ou saisissez)</label>
     <input id="adresse" placeholder="Ex : 52 place Paul Albert 83600"/>
     <div class="row">
       <div><label>Ville</label><input id="ville"/></div>
@@ -99,10 +118,10 @@ input,textarea,select{width:100%;padding:10px;border:1px solid #ccc;
   </form>
 </aside>
 
-<!-- Carte -->
+<!-- ========= Carte ========= -->
 <div id="map"></div>
 
-<!-- Liste droite -->
+<!-- ========= Liste droite ========= -->
 <aside class="right-panel">
   <div class="right-head">
     <input id="search" type="search" placeholder="Rechercher nom, adresse, ville, pays…"/>
@@ -112,11 +131,11 @@ input,textarea,select{width:100%;padding:10px;border:1px solid #ccc;
 </aside>
 
 <script>
-/* ------------ ⚠️  AJOUTEZ VOTRE CLE SUPABASE ICI -----------------
-   const SUPABASE_URL = "https://fcronugfxklwygnchuuu.supabase.co";
-   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjcm9udWdmeGtsd3lnbmNodXV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc3MDg5ODksImV4cCI6MjA3MzI4NDk4OX0.-J89Sbz2POG0ks7oS5odeq3SqKRafA1L8ORl6fHZakk";
+/* ----------- ⚠️  Supabase (facultatif) ------------
+   const SUPABASE_URL = "https://xxx.supabase.co";
+   const SUPABASE_ANON_KEY = "xxxx";
    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-   ----------------------------------------------------------------- */
+   ----------------------------------------------- */
 
 /* --- Auth simple --- */
 if(localStorage.getItem("admin_logged")!=="true"){
@@ -182,10 +201,11 @@ const clearForm=()=>{
 };
 document.getElementById("resetBtn").onclick=clearForm;
 
-/* --- Enregistrer --- */
+/* --- Enregistrer / Mettre à jour --- */
 document.getElementById("placeForm").addEventListener("submit",async e=>{
   e.preventDefault();
   const nom=document.getElementById("nom").value.trim();
+  const type=document.getElementById("type").value.trim();
   const commentaire=document.getElementById("commentaire").value.trim();
   const lat=parseFloat(document.getElementById("lat").value);
   const lng=parseFloat(document.getElementById("lng").value);
@@ -194,19 +214,19 @@ document.getElementById("placeForm").addEventListener("submit",async e=>{
   const cp=document.getElementById("cp").value.trim();
   const pays=document.getElementById("pays").value.trim();
   const top20=document.getElementById("top20").value==="true";
-  if(!nom){alert("Nom requis");return;}
+  if(!nom || !type){alert("Nom et type requis");return;}
   if(isNaN(lat)||isNaN(lng)){alert("Cliquez sur la carte pour choisir un emplacement.");return;}
   const photos=await readFilesAsDataURLs(document.getElementById("photo").files);
 
   if(editingId){
     const i=places.findIndex(p=>p.id===editingId);
     if(i>=0){
-      places[i]={...places[i],nom,commentaire,lat,lng,adresse,ville,cp,pays,top20,
+      places[i]={...places[i],nom,type,commentaire,lat,lng,adresse,ville,cp,pays,top20,
         photos:photos.length?photos:places[i].photos};
     }
     editingId=null;
   }else{
-    places.push({id:Date.now(),nom,commentaire,lat,lng,adresse,ville,cp,pays,
+    places.push({id:Date.now(),nom,type,commentaire,lat,lng,adresse,ville,cp,pays,
       photos,show:true,top20});
   }
   save(places);
@@ -220,7 +240,7 @@ function renderMarkers(){
   places.forEach(p=>{
     const m=L.marker([p.lat,p.lng],{icon:logoIcon}).addTo(map);
     const photo=p.photos&&p.photos[0]?`<img src="${p.photos[0]}" style="max-width:200px;border-radius:8px;margin-bottom:6px">`:"";
-    m.bindPopup(`${photo}<b>${escapeHTML(p.nom)}</b><br/><small>${escapeHTML(p.adresse||"")}</small><br/>${escapeHTML(p.commentaire||"")}`);
+    m.bindPopup(`${photo}<b>${escapeHTML(p.nom)}</b><br/><small>${escapeHTML(p.type||"")}</small><br/><small>${escapeHTML(p.adresse||"")}</small><br/>${escapeHTML(p.commentaire||"")}`);
     markers.push(m);
   });
 }
@@ -230,7 +250,7 @@ function cardHTML(p){
     ${thumb}
     <div class="place-body">
       <strong>${escapeHTML(p.nom)}</strong>
-      <small>${escapeHTML(p.adresse||"")}</small>
+      <small>${escapeHTML(p.type||"")} — ${escapeHTML(p.adresse||"")}</small>
       <div class="chips">
         <span class="chip ${p.show?'on':''}">${p.show?'Affiché publiquement':'Masqué'}</span>
         <span class="chip ${p.top20?'on':''}">${p.top20?'Top 20':'Hors Top 20'}</span>
@@ -261,7 +281,7 @@ function renderList(filtered=null){
 function startEdit(id){
   const p=places.find(x=>x.id===id);if(!p)return;
   editingId=id;
-  ["nom","commentaire","adresse","ville","cp","pays"].forEach(k=>document.getElementById(k).value=p[k]||"");
+  ["nom","type","commentaire","adresse","ville","cp","pays"].forEach(k=>document.getElementById(k).value=p[k]||"");
   document.getElementById("lat").value=p.lat;
   document.getElementById("lng").value=p.lng;
   document.getElementById("top20").value=p.top20?"true":"false";
@@ -292,7 +312,7 @@ document.getElementById("search").addEventListener("input",e=>{
   const q=e.target.value.trim().toLowerCase();
   if(!q){renderList();return;}
   const filtered=places.filter(p=>{
-    const hay=[p.nom,p.commentaire,p.adresse,p.ville,p.cp,p.pays]
+    const hay=[p.nom,p.type,p.commentaire,p.adresse,p.ville,p.cp,p.pays]
       .map(v=>(v||"").toString().toLowerCase()).join(" ");
     return hay.includes(q);
   });
