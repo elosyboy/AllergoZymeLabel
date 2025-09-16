@@ -5,20 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>AllergoZymeLabel — Carte mondiale</title>
 
-/* --- Barre des filtres collée en bas --- */
-.bottom-filters {
-  position: fixed;       /* 👈 passe de absolute à fixed */
-  bottom: 0;             /* 👈 collé tout en bas de l’écran */
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(255,255,255,0.92);
-  border-radius: 20px;
-  padding: 10px 14px;
-  box-shadow: var(--shadow-md);
-  display: flex;
-  gap: 10px;
-  z-index: 1200;
-  backdrop-filter: blur(6px);
+.bottom-filters{
+  position:fixed;                     /* collé à l’écran, pas à la carte */
+  left:50%;
+  bottom:0;                            /* tout en bas */
+  transform:translateX(-50%);
+  background:rgba(255,255,255,0.92);
+  border-radius:20px;
+  padding:10px 14px;
+  box-shadow:var(--shadow-md);
+  display:flex;
+  flex-wrap:wrap;                      /* si l’écran est trop étroit, passe sur 2 lignes */
+  gap:10px;
+  z-index:1200;
+  backdrop-filter:blur(6px);
 }
 
 <!-- Leaflet -->
@@ -207,6 +207,10 @@ footer .contact{
   .place-overlay{ right:50%; transform:translateX(50%); width:min(95vw,560px); }
   .bottom-filters{ bottom:82px; }
 }
+/* ✅ Ajoute ici (≈ lignes 187-188) */
+html,body{overflow-x:hidden;}    /* supprime la bande blanche latérale */
+footer{margin-bottom:60px;}      /* espace sous les boutons pour éviter qu’ils ne chevauchent le footer */
+
 </style>
 </head>
 <body>
