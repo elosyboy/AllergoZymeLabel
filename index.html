@@ -5,24 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>AllergoZymeLabel — Carte mondiale</title>
 
-<!-- ✅ Correctif responsive mobile -->
-<style>
-@media (max-width: 860px){
-  body{
-    flex-direction:column;
-  }
-  .sidebar{
-    width:100%;
-    height:auto;
-    border-right:none;
-    border-bottom:1px solid #e5e5e5;
-  }
-  #map{
-    width:100%;
-    height:calc(100vh - 260px); /* Ajuste la hauteur si nécessaire */
-  }
+/* --- Barre des filtres collée en bas --- */
+.bottom-filters {
+  position: fixed;       /* 👈 passe de absolute à fixed */
+  bottom: 0;             /* 👈 collé tout en bas de l’écran */
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255,255,255,0.92);
+  border-radius: 20px;
+  padding: 10px 14px;
+  box-shadow: var(--shadow-md);
+  display: flex;
+  gap: 10px;
+  z-index: 1200;
+  backdrop-filter: blur(6px);
 }
-</style>
 
 <!-- Leaflet -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
