@@ -5,6 +5,25 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>AllergoZymeLabel — Carte mondiale</title>
 
+<!-- ✅ Correctif responsive mobile -->
+<style>
+@media (max-width: 860px){
+  body{
+    flex-direction:column;
+  }
+  .sidebar{
+    width:100%;
+    height:auto;
+    border-right:none;
+    border-bottom:1px solid #e5e5e5;
+  }
+  #map{
+    width:100%;
+    height:calc(100vh - 260px); /* Ajuste la hauteur si nécessaire */
+  }
+}
+</style>
+
 <!-- Leaflet -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
