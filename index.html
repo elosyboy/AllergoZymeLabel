@@ -434,17 +434,6 @@ document.querySelectorAll('#bottomFilters button').forEach(btn=>{
 top20ToggleEl.addEventListener('click', ()=>{ showTop20Only = !showTop20Only; top20ToggleEl.classList.toggle('on', showTop20Only); render(places); });
 searchInputEl.addEventListener('input', ()=>{ searchTerm = searchInputEl.value; render(places); });
 
-/******************************
- * DEMO DATA (si aucune donnée)
- ******************************/
-if (!places.length){
-  places = [
-    { id:'demo1', nom:"Boulangerie Or", type:'boulangerie', ville:'Fréjus', cp:'83600', pays:'France', adresse:'12 Rue du Pain', lat:43.432, lng:6.737, top20:true, commentaire:'Pain bien cuit, protocole allergènes nickel.', photos:[] },
-    { id:'demo2', nom:"Snack Atlas", type:'snack', ville:'Fréjus', cp:'83600', pays:'France', adresse:'5 Av. Riviera', lat:43.4329, lng:6.7379, top20:false, commentaire:'Traçabilité claire, gestes sûrs.', photos:[] },
-    { id:'demo3', nom:"Le Safran", type:'restaurant', ville:'Fréjus', cp:'83600', pays:'France', adresse:'3 Bd du Centre', lat:43.431, lng:6.735, top20:true, commentaire:'Chef formé allergènes, top.', photos:[] }
-  ];
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(places));
-}
 
 /******************************
  * INIT
