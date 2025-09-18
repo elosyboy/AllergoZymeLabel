@@ -3,267 +3,148 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>AllergoZymeLabel — Carte mondiale</title>
+<title>AllergoZymeLabel — Carte mondiale (v2)</title>
 
-
-<!-- Leaflet -->
+<!-- Leaflet (fallback / default) -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/esri-leaflet"></script>
 
+<!-- Optionnel: MapLibre GL + terrain 3D (nécessite une clé MapTiler). 
+Placez window.MAPTILER_KEY = "votre_cle" dans un <script> AVANT ce bloc pour activer le mode 3D. 
+Sans clé, on bascule automatiquement sur Leaflet 2D très premium.
+-->
+<link id="maplibre-css" rel="stylesheet" href="https://unpkg.com/maplibre-gl@3.6.1/dist/maplibre-gl.css" disabled>
+<script id="maplibre-js" src="https://unpkg.com/maplibre-gl@3.6.1/dist/maplibre-gl.js" defer></script>
+
 <style>
-:root {
-  --gold:#c9a227; --white:#fff; --gray:#f7f7f7; --black:#111;
-  --shadow-sm:0 3px 10px rgba(0,0,0,0.08);
-  --shadow-md:0 6px 18px rgba(0,0,0,0.15);
-  --shadow-lg:0 14px 30px rgba(0,0,0,0.18);
+:root{
+  --gold:#c9a227; --white:#fff; --gray:#f7f7f7; --black:#0e0e0e;
+  --shadow-sm:0 3px 10px rgba(0,0,0,.08);
+  --shadow-md:0 8px 22px rgba(0,0,0,.16);
+  --shadow-lg:0 18px 40px rgba(0,0,0,.20);
 }
-*{margin:0;padding:0;box-sizing:border-box;}
-body{
-  font-family:'Segoe UI', Roboto, Arial, sans-serif;
-  height:100vh; display:flex; background:var(--white); color:var(--black);
-}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;background:var(--white);color:var(--black);font-family:"Inter", "Segoe UI", Roboto, Arial, sans-serif}
 
-/* ============ SIDEBAR ============ */
-.sidebar{
-  width:360px; background:var(--gray);
-  border-right:1px solid #e5e5e5; display:flex; flex-direction:column;
-  z-index:900; position:relative;
-}
-.sidebar-head{
-  display:flex; align-items:center; gap:10px;
-  padding:12px 14px; border-bottom:1px solid #e8e8e8;
-}
-.sidebar-head h2{
-  font-size:18px; font-weight:900; color:var(--gold); margin-right:auto;
-}
-.pill{
-  border:1px solid var(--gold); color:var(--gold); background:#fff;
-  padding:6px 12px; border-radius:999px; cursor:pointer; font-size:13px; font-weight:800;
-  transition:.2s;
-}
-.pill:hover,.pill.on{ background:var(--gold); color:#fff; }
-.places-list{ flex:1; overflow-y:auto; padding:14px; }
+/* LAYOUT */
+.app{display:flex; height:100vh; width:100vw}
+.map-wrap{position:relative; flex:1; min-width:0;}
+#map{position:absolute; inset:0}
+#map3d{position:absolute; inset:0; display:none}
 
-/* Card style (image fond + infos en bas à droite) */
-.card{
-  position:relative; border-radius:16px; overflow:hidden;
-  background:#fff; box-shadow:var(--shadow-sm); margin-bottom:14px;
-  transition:transform .2s, box-shadow .2s; cursor:pointer; min-height:190px;
-}
-.card:hover{ transform:translateY(-2px); box-shadow:var(--shadow-md); }
-.card__media{
-  position:absolute; inset:0; background:#ddd center/cover no-repeat;
-  filter:saturate(1.05) contrast(1.02);
-}
-.card__overlay{
-  position:absolute; right:10px; bottom:10px; left:10px;
-  display:flex; justify-content:space-between; gap:10px; align-items:flex-end;
-}
-.tag{
-  position:absolute; top:10px; left:10px;
-  background:rgba(255,255,255,0.92); color:var(--gold);
-  border:1px solid var(--gold); font-size:12px; font-weight:800;
-  padding:6px 10px; border-radius:999px; backdrop-filter:blur(6px);
-  box-shadow:var(--shadow-sm);
-}
-.info{
-  background:rgba(255,255,255,0.92); backdrop-filter:blur(6px);
-  border:1px solid #eee; border-radius:14px; padding:10px 12px; box-shadow:var(--shadow-sm);
-  max-width:78%;
-}
-.info b{ color:var(--gold); font-size:15px; }
-.info .addr{ font-size:12px; color:#444; margin:2px 0 4px; }
-.info .comment{ font-size:13px; color:#222; }
-.votes{
-  display:flex; gap:8px; align-items:center;
-  background:rgba(255,255,255,0.92); border:1px solid #eee;
-  padding:8px 10px; border-radius:12px; box-shadow:var(--shadow-sm);
-}
-.vote-btn{
-  display:flex; align-items:center; gap:6px; font-size:13px; font-weight:800;
-  border:none; cursor:pointer; border-radius:999px; padding:6px 10px;
-  background:#fff; color:#333; border:1px solid #ddd; transition:.15s;
-}
-.vote-btn:hover{ box-shadow:var(--shadow-sm); transform:translateY(-1px); }
-.vote-btn.up{ color:#2e7d32; border-color:#cde7cf; }
-.vote-btn.down{ color:#c62828; border-color:#f3cccc; }
+/* SIDEBAR (à droite) */
+.sidebar{width:380px; background:var(--gray); border-left:1px solid #ececec; display:flex; flex-direction:column; z-index:900}
+.sidebar-head{display:flex; align-items:center; gap:10px; padding:12px 14px; border-bottom:1px solid #e9e9e9; position:sticky; top:0; background:var(--gray); z-index:10}
+.sidebar-head h2{font-size:18px; font-weight:900; color:var(--gold); margin-right:auto}
+.pill{border:1px solid var(--gold); color:var(--gold); background:#fff; padding:6px 12px; border-radius:999px; cursor:pointer; font-size:13px; font-weight:800; transition:.2s}
+.pill:hover,.pill.on{background:var(--gold); color:#fff}
+.search{position:relative; flex:1;}
+.search input{width:100%; padding:10px 36px 10px 12px; border-radius:12px; border:1px solid #e5e5e5; outline:none; font-weight:600}
+.search .icon{position:absolute; right:10px; top:50%; transform:translateY(-50%); opacity:.55}
+.places-list{flex:1; overflow:auto; padding:14px}
 
-/* ============ MAP ============ */
-#map{ flex:1; height:100vh; position:relative; z-index:100; }
+/* CARD */
+.card{position:relative; border-radius:16px; overflow:hidden; background:#fff; box-shadow:var(--shadow-sm); margin-bottom:14px; transition:transform .2s, box-shadow .2s; cursor:pointer; min-height:190px}
+.card:hover{transform:translateY(-2px); box-shadow:var(--shadow-md)}
+.card__media{position:absolute; inset:0; background:#ddd center/cover no-repeat; filter:saturate(1.05) contrast(1.02)}
+.card__overlay{position:absolute; right:10px; bottom:10px; left:10px; display:flex; justify-content:space-between; gap:10px; align-items:flex-end}
+.tag{position:absolute; top:10px; left:10px; background:rgba(255,255,255,.92); color:var(--gold); border:1px solid var(--gold); font-size:12px; font-weight:800; padding:6px 10px; border-radius:999px; backdrop-filter:blur(6px); box-shadow:var(--shadow-sm)}
+.info{background:rgba(255,255,255,.92); backdrop-filter:blur(6px); border:1px solid #eee; border-radius:14px; padding:10px 12px; box-shadow:var(--shadow-sm); max-width:78%}
+.info b{ color:var(--gold); font-size:15px }
+.info .addr{ font-size:12px; color:#444; margin:2px 0 4px }
+.info .comment{ font-size:13px; color:#222 }
+.votes{display:flex; gap:8px; align-items:center; background:rgba(255,255,255,.92); border:1px solid #eee; padding:8px 10px; border-radius:12px; box-shadow:var(--shadow-sm)}
+.vote-btn{display:flex; align-items:center; gap:6px; font-size:13px; font-weight:800; border:none; cursor:pointer; border-radius:999px; padding:6px 10px; background:#fff; color:#333; border:1px solid #ddd; transition:.15s}
+.vote-btn:hover{ box-shadow:var(--shadow-sm); transform:translateY(-1px) }
+.vote-btn.up{ color:#2e7d32; border-color:#cde7cf }
+.vote-btn.down{ color:#c62828; border-color:#f3cccc }
 
-/* ============ FLOATING UI ============ */
-.logo{
-  position:absolute; top:16px; left:50%; transform:translateX(-50%);
-  z-index:1200; user-select:none; cursor:pointer;
-}
-.logo img{ height:60px; filter:drop-shadow(0 5px 8px rgba(0,0,0,.12)); }
+/* FLOATING UI */
+.logo{ position:absolute; top:14px; left:50%; transform:translateX(-50%); z-index:1200; user-select:none; pointer-events:auto }
+.logo img{ height:56px; filter:drop-shadow(0 5px 8px rgba(0,0,0,.12)) }
 
-.search-area{
-  position:absolute; top:16px; right:16px; z-index:1200;
-  display:flex; gap:8px; align-items:center;
-  background:rgba(255,255,255,0.92); padding:8px 14px;
-  border-radius:999px; box-shadow:var(--shadow-md); backdrop-filter:blur(6px);
-}
-.search-area input{
-  padding:8px 14px; border:none; outline:none; border-radius:999px;
-  background:#f0f0f0; min-width:260px; font-size:14px;
-}
-.search-area button{
-  padding:8px 16px; border:none; border-radius:999px;
-  background:var(--gold); color:#fff; font-weight:800; cursor:pointer;
-}
-.search-area button:hover{ background:#b18e1e; }
+/* Locate button (fixe, bas droite, au-dessus des filtres) */
+.fab{ position:absolute; right:16px; bottom:110px; z-index:1200; background:var(--gold); color:#fff; border:none; padding:12px 18px; border-radius:999px; box-shadow:var(--shadow-md); cursor:pointer; font-weight:800; font-size:15px }
+.fab:hover{ background:#b18e1e }
 
-.fab{
-  position:absolute; bottom:90px; right:20px; z-index:1200;
-  background:var(--gold); color:#fff; border:none; padding:12px 18px;
-  border-radius:999px; box-shadow:var(--shadow-md);
-  cursor:pointer; font-weight:800; font-size:15px;
-}
-.fab:hover{ background:#b18e1e; }
+/* BOTTOM FILTERS (juste au-dessus du footer) */
+.bottom-filters{ position:fixed; left:0; right:0; bottom:calc(env(safe-area-inset-bottom) + 56px); display:flex; justify-content:center; align-items:center; gap:10px; overflow-x:auto; -webkit-overflow-scrolling:touch; white-space:nowrap; scroll-snap-type:x proximity; background:rgba(255,255,255,.92); border-radius:18px; padding:8px 10px; box-shadow:var(--shadow-md); backdrop-filter:blur(6px); z-index:1200 }
+.bottom-filters::-webkit-scrollbar{ height:0; width:0 }
+.bottom-filters{ scrollbar-width:none }
+.bottom-filters button{ flex:0 0 auto; scroll-snap-align:center; border:1px solid var(--gold); background:transparent; color:var(--gold); font-weight:800; font-size:13px; padding:7px 12px; border-radius:999px; cursor:pointer; transition:.2s }
+.bottom-filters button:hover,.bottom-filters button.active{ background:var(--gold); color:#fff }
 
-/* Filtres bas carte */
-.bottom-filters{
-  position:absolute; bottom:70px; left:50%; transform:translateX(-50%);
-  background:rgba(255,255,255,0.92); border-radius:20px; padding:10px 14px;
-  box-shadow:var(--shadow-md); display:flex; gap:10px; z-index:1200; backdrop-filter:blur(6px);
-}
-.bottom-filters button{
-  border:1px solid var(--gold); background:transparent; color:var(--gold);
-  font-weight:800; font-size:14px; padding:8px 14px; border-radius:999px;
-  cursor:pointer; transition:.2s;
-}
-.bottom-filters button:hover, .bottom-filters button.active{ background:var(--gold); color:#fff; }
+/* FOOTER */
+footer{ position:fixed; left:0; right:0; bottom:0; z-index:1100; background:#fff; border-top:1px solid #eee; padding:10px 16px; display:flex; justify-content:center; align-items:center }
+footer .contact{ color:var(--gold); font-weight:900; letter-spacing:.2px; font-size:14px; text-align:center }
 
-/* ============ OVERLAY (popup premium) ============ */
-.place-overlay{
-  position:absolute; bottom:120px; right:20px; z-index:1300; width: min(520px, 86vw);
-  border-radius:18px; overflow:hidden; box-shadow:var(--shadow-lg);
-  display:none;
-}
-.place-overlay.show{ display:block; }
-.place-overlay__media{
-  position:relative; height:280px; background:#ddd center/cover no-repeat;
-}
-.place-overlay__badge{
-  position:absolute; top:12px; left:12px;
-  background:rgba(255,255,255,0.92); color:var(--gold);
-  border:1px solid var(--gold); font-weight:900; font-size:12px;
-  padding:6px 10px; border-radius:999px; backdrop-filter:blur(6px);
-}
-.place-overlay__info{
-  position:absolute; bottom:12px; right:12px; left:12px;
-  display:flex; justify-content:space-between; gap:10px; align-items:flex-end;
-}
-.place-overlay .info{ max-width:75%; }
-.place-overlay .votes{ background:rgba(255,255,255,0.92); }
+/* OVERLAY (fiche pro à la Google) */
+.place-overlay{ position:absolute; left:50%; bottom:130px; transform:translateX(-50%); z-index:1300; display:none; width:min(92vw, 560px) }
+.place-overlay__media{ position:relative; width:100%; height:260px; border-radius:18px; overflow:hidden; box-shadow:var(--shadow-lg); background:#eee center/cover no-repeat }
+.place-overlay__badge{ position:absolute; top:10px; left:10px; background:rgba(255,255,255,.92); color:var(--gold); border:1px solid var(--gold); font-size:12px; font-weight:800; padding:6px 10px; border-radius:999px; box-shadow:var(--shadow-sm) }
+.place-overlay__info{ position:absolute; right:10px; left:10px; bottom:10px; display:flex; justify-content:space-between; gap:10px; align-items:flex-end }
 
-/* ============ FOOTER CONTACT ============ */
-footer{
-  position:fixed; left:0; right:0; bottom:0; z-index:1100;
-  background:#fff; border-top:1px solid #eee; padding:10px 16px;
-  display:flex; justify-content:center; align-items:center;
-}
-footer .contact{
-  color:var(--gold); font-weight:900; letter-spacing:.2px; font-size:14px;
-  text-align:center;
-}
+/* MARQUEUR */
+.marker-icon{ width:52px; height:52px; background:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid var(--gold); box-shadow:0 6px 16px rgba(0,0,0,.20) }
+.marker-icon img{ width:30px; height:30px }
 
-/* ============ MARKER ICON ============ */
-.marker-icon{
-  width:52px;height:52px;background:#fff;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  border:2px solid var(--gold);
-  box-shadow:0 6px 16px rgba(0,0,0,0.20);
-}
-.marker-icon img{ width:30px;height:30px; }
+/* Scrollbar douce */
+.places-list::-webkit-scrollbar{ width:10px }
+.places-list::-webkit-scrollbar-thumb{ background:#d8d8d8; border-radius:8px }
 
-/* Scrollbar fine */
-.places-list::-webkit-scrollbar{ width:10px; }
-.places-list::-webkit-scrollbar-thumb{ background:#d8d8d8; border-radius:8px; }
-.places-list::-webkit-scrollbar-track{ background:transparent; }
-@media (max-width: 1100px){
-  .sidebar{ width:320px; }
-  .place-overlay__media{ height:240px; }
-}
-@media (max-width: 860px){
-  .sidebar{ display:none; }
-  .place-overlay{ right:50%; transform:translateX(50%); width:min(95vw,560px); }
-  .bottom-filters{ bottom:82px; }
-}
-/* ✅ Placement parfait en bas de page */
-footer {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;              /* footer collé en bas */
-  z-index: 1000;
-}
-
-.bottom-filters {
-  position: fixed;        /* toujours visible en bas */
-  left: 50%;
-  bottom: 70px;           /* espace de 70 px au-dessus du bord bas (donc juste au-dessus du footer) */
-  transform: translateX(-50%);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 14px;              /* espace horizontal entre les boutons */
-  padding: 8px 18px;
-  background: rgba(255,255,255,0.95);
-  border-radius: 30px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
-  backdrop-filter: blur(6px);
-  z-index: 1100;          /* passe au-dessus de la carte */
-}
-
-.bottom-filters button {
-  flex: 0 0 auto;         /* jamais de retour à la ligne */
-  padding: 8px 16px;
-  font-weight: 800;
-  border: 1px solid var(--gold);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--gold);
-  font-size: 15px;
-  transition: 0.2s;
-}
-.bottom-filters button:hover,
-.bottom-filters button.active {
-  background: var(--gold);
-  color: #fff;
-}
-
+/* Responsive */
+@media (max-width: 1100px){ .sidebar{ width:340px } }
+@media (max-width: 900px){ .sidebar{ display:none } .fab{ bottom:106px } }
 </style>
 </head>
 <body>
+<div class="app">
+  <!-- MAP CENTER -->
+  <div class="map-wrap">
+    <div class="logo" id="logoBtn" title="Établissement mis en avant">
+      <!-- Placez un PNG transparent -->
+      <img src="logo.png" alt="AllergoZyme"/>
+    </div>
+    <div id="map"></div>
+    <div id="map3d"></div>
+    <button class="fab" id="locateBtn">📍 Localiser</button>
 
-<!-- ====== SIDEBAR ====== -->
-<aside class="sidebar">
-  <div class="sidebar-head">
-    <h2>Établissements</h2>
-    <button class="pill" id="top20Toggle">Top 20</button>
+    <!-- Fiche superposée -->
+    <div class="place-overlay" id="placeOverlay" aria-live="polite">
+      <div class="place-overlay__media" id="ovMedia">
+        <div class="place-overlay__badge" id="ovType">Type</div>
+        <div class="place-overlay__info">
+          <div class="info">
+            <b id="ovName">Nom</b>
+            <div class="addr" id="ovAddr">Adresse</div>
+            <div class="comment" id="ovComment">Commentaire</div>
+          </div>
+          <div class="votes">
+            <button class="vote-btn up" id="ovUpBtn">👍 <span id="ovUp">0</span></button>
+            <button class="vote-btn down" id="ovDownBtn">👎 <span id="ovDown">0</span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
-  <div class="places-list" id="placesList">
-    <p style="font-size:14px; color:#666;">Aucun établissement labellisé.</p>
-  </div>
-</aside>
 
-<!-- ====== MAP ====== -->
-<div id="map"></div>
-
-<!-- ====== FLOATING UI ====== -->
-<div class="logo" id="logoBtn" title="Voir un établissement mis en avant">
-  <img src="logo.png" alt="AllergoZyme">
+  <!-- SIDEBAR RIGHT: TOP 20 + recherche -->
+  <aside class="sidebar">
+    <div class="sidebar-head">
+      <h2>Top 20 proches</h2>
+      <div class="search">
+        <input id="searchInput" type="search" placeholder="Rechercher un établissement..." autocomplete="off"/>
+        <span class="icon">🔎</span>
+      </div>
+      <button class="pill" id="top20Toggle" title="Afficher uniquement le Top 20">Top 20</button>
+    </div>
+    <div class="places-list" id="placesList">
+      <p style="font-size:14px; color:#666;">Aucun établissement labellisé.</p>
+    </div>
+  </aside>
 </div>
-
-<form class="search-area" id="searchForm" autocomplete="off">
-  <input id="q" type="search" placeholder="Rechercher… (nom, ville, département, pays, commentaire)" />
-  <button type="submit">OK</button>
-</form>
-
-<button class="fab" id="locateBtn">📍 Localiser</button>
 
 <!-- Filtres bas carte -->
 <div class="bottom-filters" id="bottomFilters">
@@ -275,311 +156,305 @@ footer {
   <button data-type="autre">Autre</button>
 </div>
 
-<!-- ====== OVERLAY (POPUP PREMIUM) ====== -->
-<div class="place-overlay" id="placeOverlay" aria-live="polite">
-  <div class="place-overlay__media" id="ovMedia">
-    <div class="place-overlay__badge" id="ovType">Type</div>
-    <div class="place-overlay__info">
-      <div class="info">
-        <b id="ovName">Nom</b>
-        <div class="addr" id="ovAddr">Adresse</div>
-        <div class="comment" id="ovComment">Commentaire</div>
-      </div>
-      <div class="votes">
-        <button class="vote-btn up" id="ovUpBtn">👍 <span id="ovUp">0</span></button>
-        <button class="vote-btn down" id="ovDownBtn">👎 <span id="ovDown">0</span></button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ====== FOOTER CONTACT ====== -->
+<!-- FOOTER CONTACT -->
 <footer>
   <div class="contact">Pour nous contacter : AllergoZyme — Label &amp; certification. Ensemble, sécurisons vos assiettes.</div>
 </footer>
 
 <script>
-/* ========= DONNÉES ========= */
-const STORAGE_KEY = "allergozyme_places_v3"; // rempli via admin.html
+/******************************
+ * PERSISTANCE & VOTES
+ ******************************/
+const STORAGE_KEY = "allergozyme_places_v4";
 let places = [];
 try { places = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { places = []; }
 
-/* Votes persistants (séparés) */
 const VOTES_KEY = "allergozyme_votes_v1";
 let votes = {};
 try { votes = JSON.parse(localStorage.getItem(VOTES_KEY)) || {}; } catch { votes = {}; }
 const getVotes = (id)=> votes[id] || { up:0, down:0 };
-const setVotes = (id, up, down) => {
-  votes[id] = { up, down };
-  localStorage.setItem(VOTES_KEY, JSON.stringify(votes));
-};
-/* Empêcher plusieurs votes par utilisateur */
+const setVotes = (id, up, down) => { votes[id] = { up, down }; localStorage.setItem(VOTES_KEY, JSON.stringify(votes)); };
+
 const USER_VOTES_KEY = "allergozyme_user_votes_v1";
 let userVotes = {};
-try { userVotes = JSON.parse(localStorage.getItem(USER_VOTES_KEY)) || {}; }
-catch { userVotes = {}; }
+try { userVotes = JSON.parse(localStorage.getItem(USER_VOTES_KEY)) || {}; } catch { userVotes = {}; }
+const hasUserVoted = (id)=> !!userVotes[id];
+const markUserVoted = (id, type)=>{ userVotes[id] = type; localStorage.setItem(USER_VOTES_KEY, JSON.stringify(userVotes)); };
 
-function hasUserVoted(id){
-  return !!userVotes[id];
-}
-function markUserVoted(id, type){
-  userVotes[id] = type; // 'up' ou 'down'
-  localStorage.setItem(USER_VOTES_KEY, JSON.stringify(userVotes));
-}
-
-
-/* ========= CARTE ========= */
-const map = L.map("map", { zoomControl:true }).setView([20,0],2);
-L.esri.basemapLayer("Imagery").addTo(map);
-L.esri.basemapLayer("ImageryLabels").addTo(map);
-
-/* Icône circulaire logo AllergoZyme */
-const markerIcon = L.divIcon({
-  html:`<div class="marker-icon"><img src="logo.png" alt=""></div>`,
-  iconSize:[52,52], className:""
-});
-
-/* ========= ÉTAT UI ========= */
-let markers = [];
-let showTop20Only = false;
-let typeFilter = "all";
-let currentOverlayId = null;
-
-/* ========= UTILS ========= */
+/******************************
+ * UTILS
+ ******************************/
 const escapeHTML = (s) => (s ?? "").toString()
   .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
   .replaceAll('"',"&quot;").replaceAll("'","&#039;");
-const getTypeLabel = (t) => {
-  const x = (t||"").toLowerCase();
-  if (!x) return "Autre";
-  return x.charAt(0).toUpperCase() + x.slice(1);
-}
-function clearMarkers(){ markers.forEach(m=>map.removeLayer(m)); markers=[]; }
+const typeLabel = (t)=>{ const x=(t||"").toLowerCase(); if(!x) return "Autre"; return x.charAt(0).toUpperCase()+x.slice(1)};
+const addrLine = (p)=> [p.adresse, p.ville, p.cp, p.pays].filter(Boolean).join(" — ");
 
-/* ========= OVERLAY (POPUP PREMIUM) ========= */
-const overlayEl = document.getElementById("placeOverlay");
-const ovMedia = document.getElementById("ovMedia");
-const ovType = document.getElementById("ovType");
-const ovName = document.getElementById("ovName");
-const ovAddr = document.getElementById("ovAddr");
-const ovComment = document.getElementById("ovComment");
-const ovUp = document.getElementById("ovUp");
-const ovDown = document.getElementById("ovDown");
-const ovUpBtn = document.getElementById("ovUpBtn");
-const ovDownBtn = document.getElementById("ovDownBtn");
-
-function openOverlay(p){
-  currentOverlayId = p.id;
-  const bg = p.photos && p.photos[0] ? `url('${p.photos[0]}')` : `url('logo.png')`;
-  ovMedia.style.backgroundImage = bg;
-  ovType.textContent = getTypeLabel(p.type || "Autre");
-  ovName.textContent = p.nom || "Établissement";
-  const addressLine = [p.adresse, p.ville, p.cp, p.pays].filter(Boolean).join(" — ");
-  ovAddr.textContent = addressLine || "";
-  ovComment.textContent = p.commentaire || "";
-  const { up, down } = getVotes(p.id);
-  ovUp.textContent = up;
-  ovDown.textContent = down;
-  overlayEl.classList.add("show");
-}
-
-function closeOverlay(){ overlayEl.classList.remove("show"); currentOverlayId = null; }
-
-/* Fermer overlay si on clique sur l'extérieur (zone carte) */
-map.on("click", ()=> { closeOverlay(); });
-
-/* ========= RENDU ========= */
-function createCardElement(p){
-  const wrap = document.createElement("div");
-  wrap.className = "card";
-  const bg = p.photos && p.photos[0] ? `background-image:url('${p.photos[0]}')` : `background-image:url('logo.png')`;
-  const { up, down } = getVotes(p.id);
-  const addressLine = [p.adresse, p.ville, p.cp, p.pays].filter(Boolean).join(" — ");
-
-  wrap.innerHTML = `
-    <div class="card__media" style="${bg}"></div>
-    <div class="tag">${escapeHTML(getTypeLabel(p.type))}${p.top20 ? " · Top 20" : ""}</div>
-    <div class="card__overlay">
-      <div class="info">
-        <b>${escapeHTML(p.nom || "")}</b>
-        <div class="addr">${escapeHTML(addressLine || "")}</div>
-        <div class="comment">${escapeHTML(p.commentaire || "")}</div>
-      </div>
-      <div class="votes">
-        <button class="vote-btn up">👍 <span>${up}</span></button>
-        <button class="vote-btn down">👎 <span>${down}</span></button>
-      </div>
-    </div>
-  `;
-
-  // interactions
-  wrap.addEventListener("click", (e)=>{
-    // éviter que le clic sur vote ferme/ouvre autre chose
-    const isVote = e.target.closest(".vote-btn");
-    if (isVote) return;
-    map.setView([p.lat, p.lng], 16);
-    openOverlay(p);
-  });
-
-  const upBtn = wrap.querySelector(".vote-btn.up");
-  const downBtn = wrap.querySelector(".vote-btn.down");
- upBtn.addEventListener("click", (e)=>{
-  e.stopPropagation();
-  if (hasUserVoted(p.id)) return;        // ✅ Bloque si déjà voté
-  const v = getVotes(p.id);
-  v.up += 1; setVotes(p.id, v.up, v.down);
-  markUserVoted(p.id,'up');              // ✅ Mémorise le vote
-  upBtn.querySelector("span").textContent = v.up;
-  if (currentOverlayId === p.id) ovUp.textContent = v.up;
-});
-downBtn.addEventListener("click", (e)=>{
-  e.stopPropagation();
-  if (hasUserVoted(p.id)) return;        // ✅ Bloque si déjà voté
-  const v = getVotes(p.id);
-  v.down += 1; setVotes(p.id, v.up, v.down);
-  markUserVoted(p.id,'down');            // ✅ Mémorise le vote
-  downBtn.querySelector("span").textContent = v.down;
-  if (currentOverlayId === p.id) ovDown.textContent = v.down;
-});
-  return wrap;
-}
-
-function render(list){
-  clearMarkers();
-  const sidebar = document.getElementById("placesList");
-  sidebar.innerHTML = "";
-
-  const visible = (list || []).filter(p => p.show);
-  let filtered = visible;
-  if (showTop20Only) filtered = filtered.filter(p=>p.top20);
-  if (typeFilter !== "all") filtered = filtered.filter(p => (p.type||"").toLowerCase() === typeFilter);
-
-  if (!filtered.length){
-    sidebar.innerHTML = `<p style="font-size:14px; color:#666;">Aucun établissement labellisé.</p>`;
-    return;
-  }
-
-  // top20 d’abord
-  const top = filtered.filter(p=>p.top20);
-  const others = filtered.filter(p=>!p.top20);
-
-  function addMarkerAndCard(p){
-    const m = L.marker([p.lat, p.lng], { icon: markerIcon }).addTo(map);
-    m.on("click", ()=> openOverlay(p));
-    markers.push(m);
-    sidebar.appendChild(createCardElement(p));
-  }
-
-  top.forEach(addMarkerAndCard);
-  others.forEach(addMarkerAndCard);
-}
-
-/* ========= INIT RENDU ========= */
-render(places);
-
-/* ========= RECHERCHE ========= */
-document.getElementById("searchForm").addEventListener("submit", (e)=>{
-  e.preventDefault();
-  const q = document.getElementById("q").value.trim().toLowerCase();
-  if (!q){ render(places); return; }
-  const filtered = places.filter(p=>{
-    const hay = [
-      p.nom, p.commentaire, p.ville, p.departement, p.pays, p.adresse, p.type
-    ].map(v => (v||"").toString().toLowerCase()).join(" ");
-    return hay.includes(q);
-  });
-  render(filtered);
-});
-
-/* ========= TOP 20 TOGGLE ========= */
-document.getElementById("top20Toggle").addEventListener("click", ()=>{
-  showTop20Only = !showTop20Only;
-  document.getElementById("top20Toggle").classList.toggle("on", showTop20Only);
-  render(places);
-});
-
-/* ========= LOCALISATION ========= */
 function haversine(lat1,lon1,lat2,lon2){
   const toRad=v=>(v*Math.PI)/180; const R=6371;
   const dLat=toRad(lat2-lat1), dLon=toRad(lon2-lon1);
   const a=Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
   return 2*R*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
 }
-document.getElementById("locateBtn").addEventListener("click",()=>{
-  if(!navigator.geolocation){ alert("Géolocalisation non supportée."); return; }
-  navigator.geolocation.getCurrentPosition(pos=>{
-    const user={ lat:pos.coords.latitude, lng:pos.coords.longitude };
-    map.setView([user.lat,user.lng],14);
-    L.circle([user.lat,user.lng],{
-      radius:250, color: "#c9a227", fillColor:"#c9a227", fillOpacity:0.25
-    }).addTo(map);
 
-    // Focus Top20 proches (<=30km) si dispo
-    const nearbyTop = places.filter(p=>p.show && p.top20)
-      .map(p=>({p, d: haversine(user.lat,user.lng,p.lat,p.lng)}))
-      .filter(x=>x.d<=30).sort((a,b)=>a.d-b.d).map(x=>x.p);
+/******************************
+ * MAP: Leaflet (défaut) + 3D MapLibre (si clé)
+ ******************************/
+let use3D = !!window.MAPTILER_KEY;
 
-    if (nearbyTop.length){
-      showTop20Only = true;
-      document.getElementById("top20Toggle").classList.add("on");
-      render(nearbyTop);
-    }else{
-      showTop20Only = false;
-      document.getElementById("top20Toggle").classList.remove("on");
-      render(places);
-    }
-  },()=>{ alert("Impossible de récupérer la position."); },
-  { enableHighAccuracy:true, timeout:12000, maximumAge:0 });
+// Active les assets MapLibre si clé présente
+if (use3D){
+  document.getElementById('maplibre-css').disabled = false;
+}
+
+let map, markers=[], markerIconBaseSize=52;
+let showTop20Only=false; let typeFilter='all'; let currentOverlayId=null; let searchTerm='';
+
+function buildLeaflet(){
+  const m = L.map("map", {
+    zoomControl:true,
+    minZoom:2, maxZoom:19,
+    worldCopyJump:false,
+    maxBounds: [[-85,-180],[85,180]],
+    maxBoundsViscosity: 1.0, // empêche les zones grises pro 🧊
+    inertia:true,
+  }).setView([20,0], 2);
+
+  // Basemap premium: imagerie + labels + hillshade subtil
+  L.esri.basemapLayer("Imagery").addTo(m);
+  L.esri.basemapLayer("ImageryLabels").addTo(m);
+  try{ L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}', {opacity:.25, attribution:'Esri'}).addTo(m); }catch(e){}
+
+  // Recalibre la taille du logo des marqueurs selon le zoom
+  m.on('zoomend', ()=>{
+    const z = m.getZoom();
+    const scale = Math.max(0.7, Math.min(1.15, (z-2)/12)); // discret, jamais énorme
+    const size = Math.round(markerIconBaseSize*scale);
+    markers.forEach(obj=>{
+      const el = obj.iconEl; if(!el) return; el.style.width = size+"px"; el.style.height = size+"px";
+      const img = el.querySelector('img'); if(img){ img.style.width = (size*0.58)+"px"; img.style.height = (size*0.58)+"px"; }
+    });
+  });
+
+  return m;
+}
+
+function buildMarker(p){
+  const wrapper = document.createElement('div');
+  wrapper.className = 'marker-icon';
+  wrapper.innerHTML = `<img src="logo.png" alt="">`;
+  const icon = L.divIcon({ html: wrapper, iconSize:[markerIconBaseSize, markerIconBaseSize], className:'' });
+  const marker = L.marker([p.lat, p.lng], { icon }).addTo(map);
+  // stocker l'élément pour resizer au zoom
+  marker.iconEl = wrapper; 
+  marker.on('click', ()=> openOverlay(p));
+  markers.push(marker);
+}
+
+function clearMarkers(){ markers.forEach(m=> map.removeLayer(m)); markers=[]; }
+
+function initMap(){
+  if (use3D){
+    // MapLibre 3D si MAPTILER_KEY fourni
+    try{
+      const m3d = new maplibregl.Map({
+        container: 'map3d',
+        style: `https://api.maptiler.com/maps/streets-v2/style.json?key=${window.MAPTILER_KEY}`,
+        center:[0,20], zoom: 1.3, pitch: 55, bearing: -17,
+        maxBounds:[[-180,-85],[180,85]],
+      });
+      // Terrain
+      m3d.on('load', ()=>{
+        m3d.setFog({});
+        m3d.addSource('terrain',{
+          type:'raster-dem',
+          url:`https://api.maptiler.com/tiles/terrain-rgb-v2/tiles.json?key=${window.MAPTILER_KEY}`,
+          tileSize: 256
+        });
+        m3d.setTerrain({ source:'terrain', exaggeration: 1.2 });
+      });
+      document.getElementById('map3d').style.display = 'block';
+      document.getElementById('map').style.display = 'none';
+      // NOTE: les marqueurs et la fiche utilisent Leaflet pour l’UX (plus simple). Si vous voulez 100% 3D, on pourra migrer.
+      map = buildLeaflet();
+      map._container.style.pointerEvents = 'none'; // couche UX invisible, juste pour fiches/markers si besoin plus tard
+    }catch(e){ use3D=false; map = buildLeaflet(); }
+  } else {
+    map = buildLeaflet();
+  }
+}
+
+/******************************
+ * RENDER LISTE + MARQUEURS
+ ******************************/
+const placesListEl = document.getElementById('placesList');
+const top20ToggleEl = document.getElementById('top20Toggle');
+const searchInputEl = document.getElementById('searchInput');
+
+function createCard(p){
+  const wrap = document.createElement('div');
+  wrap.className = 'card';
+  const bg = p.photos && p.photos[0] ? `background-image:url('${p.photos[0]}')` : `background-image:url('logo.png')`;
+  const { up, down } = getVotes(p.id);
+  wrap.innerHTML = `
+    <div class="card__media" style="${bg}"></div>
+    <div class="tag">${escapeHTML(typeLabel(p.type))}${p.top20?" · Top 20":""}</div>
+    <div class="card__overlay">
+      <div class="info">
+        <b>${escapeHTML(p.nom||"")}</b>
+        <div class="addr">${escapeHTML(addrLine(p)||"")}</div>
+        <div class="comment">${escapeHTML(p.commentaire||"")}</div>
+      </div>
+      <div class="votes">
+        <button class="vote-btn up">👍 <span>${up}</span></button>
+        <button class="vote-btn down">👎 <span>${down}</span></button>
+      </div>
+    </div>`;
+
+  wrap.addEventListener('click', (e)=>{ if(e.target.closest('.vote-btn')) return; map.setView([p.lat,p.lng], 16); openOverlay(p); });
+  const upBtn = wrap.querySelector('.vote-btn.up');
+  const downBtn = wrap.querySelector('.vote-btn.down');
+  upBtn.addEventListener('click', (e)=>{ e.stopPropagation(); if(hasUserVoted(p.id)) return; const v=getVotes(p.id); v.up++; setVotes(p.id,v.up,v.down); markUserVoted(p.id,'up'); upBtn.querySelector('span').textContent=v.up; if(currentOverlayId===p.id) ovUp.textContent=v.up; });
+  downBtn.addEventListener('click', (e)=>{ e.stopPropagation(); if(hasUserVoted(p.id)) return; const v=getVotes(p.id); v.down++; setVotes(p.id,v.up,v.down); markUserVoted(p.id,'down'); downBtn.querySelector('span').textContent=v.down; if(currentOverlayId===p.id) ovDown.textContent=v.down; });
+
+  return wrap;
+}
+
+function render(list){
+  clearMarkers();
+  placesListEl.innerHTML = '';
+  const visible = (list||[]).filter(p=> p.show !== false);
+
+  // filtres
+  let filtered = visible;
+  if (showTop20Only) filtered = filtered.filter(p=> p.top20);
+  if (typeFilter!=='all') filtered = filtered.filter(p=> (p.type||'').toLowerCase()===typeFilter);
+  if (searchTerm.trim()){
+    const q = searchTerm.trim().toLowerCase();
+    filtered = filtered.filter(p => (p.nom||'').toLowerCase().includes(q));
+  }
+
+  if (!filtered.length){
+    placesListEl.innerHTML = `<p style="font-size:14px; color:#666;">Aucun établissement labellisé.</p>`;
+    return;
+  }
+
+  // placer d'abord les Top20
+  const top = filtered.filter(p=>p.top20);
+  const others = filtered.filter(p=>!p.top20);
+
+  [...top, ...others].forEach(p=>{ buildMarker(p); placesListEl.appendChild(createCard(p)); });
+}
+
+/******************************
+ * OVERLAY + VOTES DANS OVERLAY
+ ******************************/
+const overlayEl = document.getElementById('placeOverlay');
+const ovMedia = document.getElementById('ovMedia');
+const ovType = document.getElementById('ovType');
+const ovName = document.getElementById('ovName');
+const ovAddr = document.getElementById('ovAddr');
+const ovComment = document.getElementById('ovComment');
+const ovUpBtn = document.getElementById('ovUpBtn');
+const ovDownBtn = document.getElementById('ovDownBtn');
+const ovUp = document.getElementById('ovUp');
+const ovDown = document.getElementById('ovDown');
+
+function openOverlay(p){
+  currentOverlayId = p.id;
+  const bg = p.photos && p.photos[0] ? `url('${p.photos[0]}')` : `url('logo.png')`;
+  ovMedia.style.backgroundImage = bg;
+  ovType.textContent = typeLabel(p.type);
+  ovName.textContent = p.nom||'';
+  ovAddr.textContent = addrLine(p)||'';
+  ovComment.textContent = p.commentaire||'';
+  const v = getVotes(p.id); ovUp.textContent = v.up; ovDown.textContent = v.down;
+  overlayEl.style.display = 'block';
+}
+function closeOverlay(){ overlayEl.style.display='none'; currentOverlayId = null; }
+
+ovUpBtn.addEventListener('click', ()=>{ if(currentOverlayId==null||hasUserVoted(currentOverlayId)) return; const v=getVotes(currentOverlayId); v.up++; setVotes(currentOverlayId,v.up,v.down); markUserVoted(currentOverlayId,'up'); ovUp.textContent=v.up; render(places); const p=places.find(x=>x.id===currentOverlayId); if(p) openOverlay(p); });
+ovDownBtn.addEventListener('click', ()=>{ if(currentOverlayId==null||hasUserVoted(currentOverlayId)) return; const v=getVotes(currentOverlayId); v.down++; setVotes(currentOverlayId,v.up,v.down); markUserVoted(currentOverlayId,'down'); ovDown.textContent=v.down; render(places); const p=places.find(x=>x.id===currentOverlayId); if(p) openOverlay(p); });
+
+// fermer overlay en cliquant en dehors de la fiche
+map?.on?.('click', closeOverlay);
+
+document.getElementById('logoBtn').addEventListener('click', ()=>{
+  const visible = places.filter(p=>p.show!==false);
+  const filtered = typeFilter==='all' ? visible : visible.filter(p => (p.type||'').toLowerCase()===typeFilter);
+  const top = filtered.filter(p=>p.top20);
+  const candidate = top[0] || filtered[0] || visible[0];
+  if (candidate){ map.setView([candidate.lat, candidate.lng], 16); openOverlay(candidate); }
 });
 
-/* ========= FILTRES TYPE ========= */
-document.querySelectorAll("#bottomFilters button").forEach(btn=>{
-  btn.addEventListener("click", ()=>{
-    document.querySelectorAll("#bottomFilters button").forEach(b=>b.classList.remove("active"));
-    btn.classList.add("active");
+/******************************
+ * GEOLOCALISATION + TOP 20 PROCHES
+ ******************************/
+function sortNearest(user){
+  return [...places]
+    .filter(p=> p.show!==false)
+    .map(p=> ({ p, d: haversine(user.lat,user.lng,p.lat,p.lng) }))
+    .sort((a,b)=> a.d - b.d)
+    .map(x=> x.p);
+}
+
+function showNearbyTop20(user){
+  // Le Top 20 s'appuie sur le flag p.top20 OU le tri par distance si pas assez d'items labellisés
+  const nearby = sortNearest(user);
+  let top20 = nearby.filter(p=>p.top20).slice(0,20);
+  if (top20.length < 20) top20 = nearby.slice(0,20);
+  showTop20Only = true; top20ToggleEl.classList.add('on');
+  render(top20);
+}
+
+// Bouton Localiser
+const locateBtn = document.getElementById('locateBtn');
+locateBtn.addEventListener('click', ()=>{
+  if(!navigator.geolocation){ alert('Géolocalisation non supportée.'); return; }
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const user={lat:pos.coords.latitude, lng:pos.coords.longitude};
+    map.setView([user.lat,user.lng], 14);
+    L.circle([user.lat,user.lng],{ radius:250, color:'#c9a227', fillColor:'#c9a227', fillOpacity:0.25 }).addTo(map);
+    showNearbyTop20(user);
+  }, ()=> alert('Impossible de récupérer la position.'), { enableHighAccuracy:true, timeout:12000, maximumAge:0 });
+});
+
+/******************************
+ * FILTRES BAS + RECHERCHE
+ ******************************/
+document.querySelectorAll('#bottomFilters button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('#bottomFilters button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
     typeFilter = btn.dataset.type;
     render(places);
   });
 });
 
-/* ========= LOGO CLICK → ouvrir une fiche mise en avant ========= */
-document.getElementById("logoBtn").addEventListener("click", ()=>{
-  // priorité: top20 selon filtre -> sinon premier visible
-  const visible = places.filter(p=>p.show);
-  let candidate = null;
-  const filtered = typeFilter==="all" ? visible : visible.filter(p=>(p.type||"").toLowerCase()===typeFilter);
-  const top = filtered.filter(p=>p.top20);
-  if (top.length) candidate = top[0];
-  else if (filtered.length) candidate = filtered[0];
-  else if (visible.length) candidate = visible[0];
+top20ToggleEl.addEventListener('click', ()=>{ showTop20Only = !showTop20Only; top20ToggleEl.classList.toggle('on', showTop20Only); render(places); });
+searchInputEl.addEventListener('input', ()=>{ searchTerm = searchInputEl.value; render(places); });
 
-  if (candidate){
-    map.setView([candidate.lat, candidate.lng], 16);
-    openOverlay(candidate);
-  }
-});
+/******************************
+ * DEMO DATA (si aucune donnée)
+ ******************************/
+if (!places.length){
+  places = [
+    { id:'demo1', nom:"Boulangerie Or", type:'boulangerie', ville:'Fréjus', cp:'83600', pays:'France', adresse:'12 Rue du Pain', lat:43.432, lng:6.737, top20:true, commentaire:'Pain bien cuit, protocole allergènes nickel.', photos:[] },
+    { id:'demo2', nom:"Snack Atlas", type:'snack', ville:'Fréjus', cp:'83600', pays:'France', adresse:'5 Av. Riviera', lat:43.4329, lng:6.7379, top20:false, commentaire:'Traçabilité claire, gestes sûrs.', photos:[] },
+    { id:'demo3', nom:"Le Safran", type:'restaurant', ville:'Fréjus', cp:'83600', pays:'France', adresse:'3 Bd du Centre', lat:43.431, lng:6.735, top20:true, commentaire:'Chef formé allergènes, top.', photos:[] }
+  ];
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(places));
+}
 
-/* ========= VOTE depuis l’overlay ========= */
-ovUpBtn.addEventListener("click", ()=>{
-  if (currentOverlayId==null || hasUserVoted(currentOverlayId)) return; // ✅ Bloque si déjà voté
-  const v = getVotes(currentOverlayId);
-  v.up++; setVotes(currentOverlayId, v.up, v.down);
-  markUserVoted(currentOverlayId,'up');                                 // ✅ Mémorise
-  ovUp.textContent = v.up;
-  render(places);
-  const p = places.find(x=>x.id===currentOverlayId);
-  if (p) openOverlay(p);
-});
-ovDownBtn.addEventListener("click", ()=>{
-  if (currentOverlayId==null || hasUserVoted(currentOverlayId)) return; // ✅ Bloque si déjà voté
-  const v = getVotes(currentOverlayId);
-  v.down++; setVotes(currentOverlayId, v.up, v.down);
-  markUserVoted(currentOverlayId,'down');                               // ✅ Mémorise
-  ovDown.textContent = v.down;
-  render(places);
-  const p = places.find(x=>x.id===currentOverlayId);
-  if (p) openOverlay(p);
-});
+/******************************
+ * INIT
+ ******************************/
+initMap();
+render(places);
+
+// Empêcher la carte de bouger UI (pas de zones grises)
+// Déjà géré par maxBoundsViscosity; on verrouille aussi le scroll page
+window.addEventListener('wheel', (e)=>{ if(e.target.closest('.places-list')) return; }, {passive:true});
 </script>
 </body>
 </html>
