@@ -24,7 +24,7 @@ Sans clé, on bascule automatiquement sur Leaflet 2D très premium.
   const SUPABASE_URL = "https://fcronugfxklwygnchuuu.supabase.co";    // <- Project URL
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjcm9udWdmeGtsd3lnbmNodXV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc3MDg5ODksImV4cCI6MjA3MzI4NDk4OX0.-J89Sbz2POG0ks7oS5odeq3SqKRafA1L8ORl6fHZakk";          // <- anon public key
 
-  const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 </script>
 <!-- === /Supabase Configuration === -->
 

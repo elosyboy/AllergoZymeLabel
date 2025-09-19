@@ -13,13 +13,14 @@
 <script src="https://unpkg.com/esri-leaflet-geocoder"></script>
 
 <!-- === Supabase Configuration === -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
-  const SUPABASE_URL = "https://fcronugfxklwygnchuuu.supabase.co";    // <- URL de ton projet
+  const SUPABASE_URL = "https://fcronugfxklwygnchuuu.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjcm9udWdmeGtsd3lnbmNodXV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc3MDg5ODksImV4cCI6MjA3MzI4NDk4OX0.-J89Sbz2POG0ks7oS5odeq3SqKRafA1L8ORl6fHZakk";
-  const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 </script>
-<!-- === /Supabase Configuration === -->
 
 <style>
 :root{
