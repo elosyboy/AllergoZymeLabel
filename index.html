@@ -18,14 +18,15 @@ Sans clé, on bascule automatiquement sur Leaflet 2D très premium.
 <script id="maplibre-js" src="https://unpkg.com/maplibre-gl@3.6.1/dist/maplibre-gl.js" defer></script>
 
 <!-- === Supabase Configuration === -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- === Supabase Configuration === -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
-  // ⚠️ Remplace les valeurs ci-dessous par celles de ton projet Supabase
-  const SUPABASE_URL = "https://fcronugfxklwygnchuuu.supabase.co";    // <- Project URL
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjcm9udWdmeGtsd3lnbmNodXV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc3MDg5ODksImV4cCI6MjA3MzI4NDk4OX0.-J89Sbz2POG0ks7oS5odeq3SqKRafA1L8ORl6fHZakk";          // <- anon public key
+  const SUPABASE_URL = "https://fcronugfxklwygnchuuu.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjcm9udWdmeGtsd3lnbmNodXV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc3MDg5ODksImV4cCI6MjA3MzI4NDk4OX0.-J89Sbz2POG0ks7oS5odeq3SqKRafA1L8ORl6fHZakk";
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 </script>
+
 <!-- === /Supabase Configuration === -->
 
 <style>
@@ -451,7 +452,20 @@ searchInputEl.addEventListener('input', ()=>{ searchTerm = searchInputEl.value; 
  * INIT
  ******************************/
 initMap();
-render(places);
+// --- Récupération depuis Supabase ---
+async function loadFromSupabase(){
+  const { data, error } = await supabase.from('places').select('*');
+  if (error) {
+    console.error('Erreur lecture Supabase', error);
+    return;
+  }
+  places = data || [];
+  render(places);
+}
+
+// Appel au démarrage
+loadFromSupabase();
+
 
 // Empêcher la carte de bouger UI (pas de zones grises)
 // Déjà géré par maxBoundsViscosity; on verrouille aussi le scroll page
