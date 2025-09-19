@@ -4,7 +4,6 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>AllergoZymeLabel — Admin</title>
-<!-- refresh deploy -->
 
 <!-- Leaflet + Esri -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -16,10 +15,8 @@
 <!-- === Supabase Configuration === -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  // ⚠️ Remplace les valeurs par celles de ton projet
-  const SUPABASE_URL = "https://fcronugfxklwygnchuuu.supabase.co";    // <- Project URL
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjcm9udWdmeGtsd3lnbmNodXV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc3MDg5ODksImV4cCI6MjA3MzI4NDk4OX0.-J89Sbz2POG0ks7oS5odeq3SqKRafA1L8ORl6fHZakk";          // <- anon public key
-
+  const SUPABASE_URL = "https://fcronugfxklwygnchuuu.supabase.co";    // <- URL de ton projet
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjcm9udWdmeGtsd3lnbmNodXV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc3MDg5ODksImV4cCI6MjA3MzI4NDk4OX0.-J89Sbz2POG0ks7oS5odeq3SqKRafA1L8ORl6fHZakk";
   const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 </script>
 <!-- === /Supabase Configuration === -->
@@ -33,12 +30,10 @@
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%;overflow:hidden;background:#fff;color:var(--black);font-family:"Inter","Segoe UI",Roboto,Arial,sans-serif}
 
-/* LAYOUT */
 .app{display:grid; grid-template-columns:360px 1fr 380px; height:100vh;}
 .left-panel,.right-panel{background:var(--gray); padding:20px; overflow-y:auto;}
 #map{position:relative; width:100%; height:100%;}
 
-/* TITLES & FORMS */
 .title{color:var(--gold); font-weight:900; font-size:20px; margin-bottom:12px;}
 label{font-weight:600;margin-top:12px;display:block;}
 input,textarea,select{
@@ -48,14 +43,10 @@ input,textarea,select{
 .row{display:flex;gap:10px;}
 .row>div{flex:1;}
 .actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
-.btn{
-  padding:10px 14px;border:none;border-radius:8px;cursor:pointer;
-  font-weight:700;font-size:14px;
-}
+.btn{padding:10px 14px;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:14px;}
 .btn-primary{background:var(--gold);color:#fff;}
 .btn-ghost{background:#fff;border:1px solid #ddd;}
 
-/* LIST RIGHT */
 .right-head{display:flex;gap:10px;align-items:center;margin-bottom:16px;}
 .right-head input{flex:1; padding:10px; border-radius:8px; border:1px solid #ccc;}
 .logout{margin-left:auto;}
@@ -150,196 +141,211 @@ input,textarea,select{
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
 
-if(localStorage.getItem("admin_logged")!=="true"){
-  window.location.href="admin-login.html";
-}
-document.getElementById("logoutBtn").onclick=()=>{
-  localStorage.removeItem("admin_logged");
-  window.location.href="admin-login.html";
-};
+  // --- Vérif login admin ---
+  if(localStorage.getItem("admin_logged")!=="true"){
+    window.location.href="admin-login.html";
+  }
+  document.getElementById("logoutBtn").onclick=()=>{
+    localStorage.removeItem("admin_logged");
+    window.location.href="admin-login.html";
+  };
 
-const STORAGE_KEY="allergozyme_places_v4";
-const load=()=>{try{return JSON.parse(localStorage.getItem(STORAGE_KEY))||[];}catch{return[];}};
-const save=list=>localStorage.setItem(STORAGE_KEY,JSON.stringify(list));
-let places=load();
-let editingId=null;
+  let places = [];
+  let editingId = null;
+  let tempMarker = null;
+  let markers = [];
 
-const map=L.map("map",{minZoom:2,maxZoom:19,maxBounds:[[-85,-180],[85,180]],maxBoundsViscosity:1.0}).setView([20,0],2);
-L.esri.basemapLayer("Imagery").addTo(map);
-L.esri.basemapLayer("ImageryLabels").addTo(map);
+  // =================== Carte ===================
+  const map=L.map("map",{minZoom:2,maxZoom:19,maxBounds:[[-85,-180],[85,180]],maxBoundsViscosity:1.0}).setView([20,0],2);
+  L.esri.basemapLayer("Imagery").addTo(map);
+  L.esri.basemapLayer("ImageryLabels").addTo(map);
 
-const logoIcon=L.divIcon({
-  html:`<div style="width:48px;height:48px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid #c9a227;box-shadow:0 4px 12px rgba(0,0,0,0.15);"><img src="logo.png" style="width:28px;height:28px;"/></div>`,
-  iconSize:[48,48],className:""
-});
-
-const geocoder=L.esri.Geocoding.geocodeService();
-let tempMarker=null;
-
-map.on("click",e=>{
-  const {lat,lng}=e.latlng;
-  if(tempMarker) map.removeLayer(tempMarker);
-  tempMarker=L.marker([lat,lng],{icon:logoIcon}).addTo(map);
-  document.getElementById("lat").value=lat;
-  document.getElementById("lng").value=lng;
-  geocoder.reverse().latlng(e.latlng).run((err,res)=>{
-    if(err||!res||!res.address) return;
-    const a=res.address;
-    document.getElementById("adresse").value=[a.Address,a.Postal,a.City,a.Region,a.Country].filter(Boolean).join(" ");
-    document.getElementById("ville").value=a.City||"";
-    document.getElementById("cp").value=a.Postal||"";
-    document.getElementById("pays").value=a.Country||a.CountryCode||"";
+  const logoIcon=L.divIcon({
+    html:`<div style="width:48px;height:48px;background:#fff;border-radius:50%;
+      display:flex;align-items:center;justify-content:center;
+      border:2px solid #c9a227;box-shadow:0 4px 12px rgba(0,0,0,0.15);">
+      <img src="logo.png" style="width:28px;height:28px;"/></div>`,
+    iconSize:[48,48],className:""
   });
-});
 
-const readFilesAsDataURLs = files =>
-  Promise.all(Array.from(files||[]).map(f=>new Promise(res=>{
-    const r=new FileReader();r.onload=e=>res(e.target.result);r.readAsDataURL(f);
-  })));
+  const geocoder=L.esri.Geocoding.geocodeService();
 
-const escapeHTML=s=>(s??"").toString()
-  .replaceAll("&","&amp;").replaceAll("<","&lt;")
-  .replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+  map.on("click",e=>{
+    const {lat,lng}=e.latlng;
+    if(tempMarker) map.removeLayer(tempMarker);
+    tempMarker=L.marker([lat,lng],{icon:logoIcon}).addTo(map);
+    document.getElementById("lat").value=lat;
+    document.getElementById("lng").value=lng;
+    geocoder.reverse().latlng(e.latlng).run((err,res)=>{
+      if(err||!res||!res.address) return;
+      const a=res.address;
+      document.getElementById("adresse").value=[a.Address,a.Postal,a.City,a.Region,a.Country].filter(Boolean).join(" ");
+      document.getElementById("ville").value=a.City||"";
+      document.getElementById("cp").value=a.Postal||"";
+      document.getElementById("pays").value=a.Country||a.CountryCode||"";
+    });
+  });
 
-const clearForm=()=>{
-  editingId=null;
-  document.getElementById("placeForm").reset();
-  ["lat","lng"].forEach(id=>document.getElementById(id).value="");
-  if(tempMarker){map.removeLayer(tempMarker);tempMarker=null;}
-};
+  const readFilesAsDataURLs = files =>
+    Promise.all(Array.from(files||[]).map(f=>new Promise(res=>{
+      const r=new FileReader();r.onload=e=>res(e.target.result);r.readAsDataURL(f);
+    })));
 
-document.getElementById("resetBtn").onclick=clearForm;
+  const escapeHTML=s=>(s??"").toString()
+    .replaceAll("&","&amp;").replaceAll("<","&lt;")
+    .replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
 
-document.getElementById("placeForm").addEventListener("submit",async e=>{
-  e.preventDefault();
-  const nom=document.getElementById("nom").value.trim();
-  const type=document.getElementById("type").value.trim();
-  const commentaire=document.getElementById("commentaire").value.trim();
-  const lat=parseFloat(document.getElementById("lat").value);
-  const lng=parseFloat(document.getElementById("lng").value);
-  const adresse=document.getElementById("adresse").value.trim();
-  const ville=document.getElementById("ville").value.trim();
-  const cp=document.getElementById("cp").value.trim();
-  const pays=document.getElementById("pays").value.trim();
-  const top20=document.getElementById("top20").value==="true";
-  if(!nom || !type){alert("Nom et type requis");return;}
-  if(isNaN(lat)||isNaN(lng)){alert("Cliquez sur la carte pour choisir un emplacement.");return;}
-  const photos=await readFilesAsDataURLs(document.getElementById("photo").files);
-
-  if(editingId){
-    const i=places.findIndex(p=>p.id===editingId);
-    if(i>=0){
-      places[i]={...places[i],nom,type,commentaire,lat,lng,adresse,ville,cp,pays,top20,
-        photos:photos.length?photos:places[i].photos};
-    }
+  function clearForm(){
     editingId=null;
-  }else{
-    places.push({id:Date.now(),nom,type,commentaire,lat,lng,adresse,ville,cp,pays,
-      photos,show:true,top20});
+    document.getElementById("placeForm").reset();
+    ["lat","lng"].forEach(id=>document.getElementById(id).value="");
+    if(tempMarker){map.removeLayer(tempMarker);tempMarker=null;}
   }
-  save(places);
-  renderList();renderMarkers();clearForm();
-});
+  document.getElementById("resetBtn").onclick=clearForm;
 
-let markers=[];
-function renderMarkers(){
-  markers.forEach(m=>map.removeLayer(m));markers=[];
-  places.forEach(p=>{
-    const m=L.marker([p.lat,p.lng],{icon:logoIcon}).addTo(map);
-    const photo=p.photos&&p.photos[0]?`<img src="${p.photos[0]}" style="max-width:200px;border-radius:8px;margin-bottom:6px">`:"";
-    m.bindPopup(`${photo}<b>${escapeHTML(p.nom)}</b><br/><small>${escapeHTML(p.type||"")}</small><br/><small>${escapeHTML(p.adresse||"")}</small><br/>${escapeHTML(p.commentaire||"")}`);
-    markers.push(m);
-  });
-}
-
-function cardHTML(p){
-  const thumb=p.photos&&p.photos[0]?`<img class="place-thumb" src="${p.photos[0]}">`:`<div class="place-thumb"></div>`;
-  return `
-    ${thumb}
-    <div class="place-body">
-      <strong>${escapeHTML(p.nom)}</strong>
-      <small>${escapeHTML(p.type||"")} — ${escapeHTML(p.adresse||"")}</small>
-      <div class="chips">
-        <span class="chip ${p.show?'on':''}">${p.show?'Affiché publiquement':'Masqué'}</span>
-        <span class="chip ${p.top20?'on':''}">${p.top20?'Top 20':'Hors Top 20'}</span>
-      </div>
-      <div class="place-actions">
-        <button class="btn btn-green edit">Modifier</button>
-        <button class="btn btn-red del">Supprimer</button>
-        <button class="btn btn-blue toggle">${p.show?'Retirer de la carte':'Afficher sur la carte'}</button>
-        <button class="btn btn-ghost top20">${p.top20?'Retirer du Top 20':'Ajouter au Top 20'}</button>
-      </div>
-    </div>`;
-}
-
-function renderList(filtered=null){
-  const list=document.getElementById("placesList");
-  list.innerHTML="";
-  const data=filtered??places;
-  if(!data.length){list.innerHTML="<p style='color:#666'>Aucun établissement.</p>";return;}
-  data.forEach(p=>{
-    const wrap=document.createElement("div");
-    wrap.className="place-item";wrap.innerHTML=cardHTML(p);
-    wrap.querySelector(".edit").onclick=()=>startEdit(p.id);
-    wrap.querySelector(".del").onclick=()=>deletePlace(p.id);
-    wrap.querySelector(".toggle").onclick=()=>toggleShow(p.id);
-    wrap.querySelector(".top20").onclick=()=>toggleTop20(p.id);
-    list.appendChild(wrap);
-  });
-}
-
-function startEdit(id){
-  const p=places.find(x=>x.id===id);if(!p)return;
-  editingId=id;
-  ["nom","type","commentaire","adresse","ville","cp","pays"].forEach(k=>document.getElementById(k).value=p[k]||"");
-  document.getElementById("lat").value=p.lat;
-  document.getElementById("lng").value=p.lng;
-  document.getElementById("top20").value=p.top20?"true":"false";
-  if(tempMarker) map.removeLayer(tempMarker);
-  tempMarker=L.marker([p.lat,p.lng],{icon:logoIcon}).addTo(map);
-  map.setView([p.lat,p.lng],16);
-}
-
-function deletePlace(id){
-  if(!confirm("Supprimer cet établissement ?")) return;
-  places=places.filter(p=>p.id!==id);save(places);
-  renderList();renderMarkers();
-}
-
-function toggleShow(id){
-  const i=places.findIndex(p=>p.id===id);
-  if(i<0)return;
-  places[i].show=!places[i].show;
-  save(places);renderList();renderMarkers();
-}
-
-function toggleTop20(id){
-  const i=places.findIndex(p=>p.id===id);
-  if(i<0)return;
-  places[i].top20=!places[i].top20;
-  save(places);renderList();
-}
-
-document.getElementById("search").addEventListener("input", e => {
-  const q = e.target.value.trim().toLowerCase();
-  if (!q) {
+  // =================== Chargement depuis Supabase ===================
+  async function loadFromSupabase(){
+    const { data, error } = await supabase.from('places').select('*');
+    if(error){ console.error(error); alert("Erreur de chargement"); return; }
+    places = data || [];
     renderList();
-    return;
+    renderMarkers();
   }
-  const filtered = places.filter(p => {
-    const hay = [p.nom, p.type, p.commentaire, p.adresse, p.ville, p.cp, p.pays]
-      .map(v => (v || "").toString().toLowerCase())
-      .join(" ");
-    return hay.includes(q);
+
+  // =================== Enregistrer / Modifier ===================
+  document.getElementById("placeForm").addEventListener("submit",async e=>{
+    e.preventDefault();
+    const nom=document.getElementById("nom").value.trim();
+    const type=document.getElementById("type").value.trim();
+    const commentaire=document.getElementById("commentaire").value.trim();
+    const lat=parseFloat(document.getElementById("lat").value);
+    const lng=parseFloat(document.getElementById("lng").value);
+    const adresse=document.getElementById("adresse").value.trim();
+    const ville=document.getElementById("ville").value.trim();
+    const cp=document.getElementById("cp").value.trim();
+    const pays=document.getElementById("pays").value.trim();
+    const top20=document.getElementById("top20").value==="true";
+    if(!nom || !type){alert("Nom et type requis");return;}
+    if(isNaN(lat)||isNaN(lng)){alert("Cliquez sur la carte pour choisir un emplacement.");return;}
+    const photos=await readFilesAsDataURLs(document.getElementById("photo").files);
+
+    let error;
+    if(editingId){
+      ({ error } = await supabase.from('places').update({
+        nom,type,commentaire,lat,lng,adresse,ville,cp,pays,top20,photos
+      }).eq('id', editingId));
+      editingId=null;
+    }else{
+      ({ error } = await supabase.from('places').insert([{
+        nom,type,commentaire,lat,lng,adresse,ville,cp,pays,top20,photos,show:true
+      }]));
+    }
+    if(error){ console.error(error); alert("Erreur enregistrement"); return; }
+    clearForm();
+    loadFromSupabase();
   });
-  renderList(filtered);
-});
 
+  // =================== Affichage ===================
+  function cardHTML(p){
+    const thumb=p.photos&&p.photos[0]?`<img class="place-thumb" src="${p.photos[0]}">`:`<div class="place-thumb"></div>`;
+    return `
+      ${thumb}
+      <div class="place-body">
+        <strong>${escapeHTML(p.nom)}</strong>
+        <small>${escapeHTML(p.type||"")} — ${escapeHTML(p.adresse||"")}</small>
+        <div class="chips">
+          <span class="chip ${p.show?'on':''}">${p.show?'Affiché publiquement':'Masqué'}</span>
+          <span class="chip ${p.top20?'on':''}">${p.top20?'Top 20':'Hors Top 20'}</span>
+        </div>
+        <div class="place-actions">
+          <button class="btn btn-green edit">Modifier</button>
+          <button class="btn btn-red del">Supprimer</button>
+          <button class="btn btn-blue toggle">${p.show?'Retirer de la carte':'Afficher sur la carte'}</button>
+          <button class="btn btn-ghost top20">${p.top20?'Retirer du Top 20':'Ajouter au Top 20'}</button>
+        </div>
+      </div>`;
+  }
 
-renderList();
-renderMarkers();
+  function renderList(filtered=null){
+    const list=document.getElementById("placesList");
+    list.innerHTML="";
+    const data=filtered??places;
+    if(!data.length){list.innerHTML="<p style='color:#666'>Aucun établissement.</p>";return;}
+    data.forEach(p=>{
+      const wrap=document.createElement("div");
+      wrap.className="place-item";wrap.innerHTML=cardHTML(p);
+      wrap.querySelector(".edit").onclick=()=>startEdit(p.id);
+      wrap.querySelector(".del").onclick=()=>deletePlace(p.id);
+      wrap.querySelector(".toggle").onclick=()=>toggleShow(p.id);
+      wrap.querySelector(".top20").onclick=()=>toggleTop20(p.id);
+      list.appendChild(wrap);
+    });
+  }
+
+  function renderMarkers(){
+    markers.forEach(m=>map.removeLayer(m));markers=[];
+    places.forEach(p=>{
+      if(p.show){
+        const m=L.marker([p.lat,p.lng],{icon:logoIcon}).addTo(map);
+        const photo=p.photos&&p.photos[0]?`<img src="${p.photos[0]}" style="max-width:200px;border-radius:8px;margin-bottom:6px">`:"";
+        m.bindPopup(`${photo}<b>${escapeHTML(p.nom)}</b><br/><small>${escapeHTML(p.type||"")}</small><br/><small>${escapeHTML(p.adresse||"")}</small><br/>${escapeHTML(p.commentaire||"")}`);
+        markers.push(m);
+      }
+    });
+  }
+
+  // =================== Actions ===================
+  function startEdit(id){
+    const p=places.find(x=>x.id===id);if(!p)return;
+    editingId=id;
+    ["nom","type","commentaire","adresse","ville","cp","pays"].forEach(k=>document.getElementById(k).value=p[k]||"");
+    document.getElementById("lat").value=p.lat;
+    document.getElementById("lng").value=p.lng;
+    document.getElementById("top20").value=p.top20?"true":"false";
+    if(tempMarker) map.removeLayer(tempMarker);
+    tempMarker=L.marker([p.lat,p.lng],{icon:logoIcon}).addTo(map);
+    map.setView([p.lat,p.lng],16);
+  }
+
+  async function deletePlace(id){
+    if(!confirm("Supprimer cet établissement ?")) return;
+    const { error } = await supabase.from('places').delete().eq('id', id);
+    if(error){ console.error(error); alert("Erreur suppression"); return; }
+    loadFromSupabase();
+  }
+
+  async function toggleShow(id){
+    const p=places.find(x=>x.id===id);
+    if(!p)return;
+    const { error } = await supabase.from('places').update({ show: !p.show }).eq('id', id);
+    if(error){ console.error(error); alert("Erreur mise à jour"); return; }
+    loadFromSupabase();
+  }
+
+  async function toggleTop20(id){
+    const p=places.find(x=>x.id===id);
+    if(!p)return;
+    const { error } = await supabase.from('places').update({ top20: !p.top20 }).eq('id', id);
+    if(error){ console.error(error); alert("Erreur mise à jour"); return; }
+    loadFromSupabase();
+  }
+
+  document.getElementById("search").addEventListener("input", e => {
+    const q = e.target.value.trim().toLowerCase();
+    if (!q) { renderList(); return; }
+    const filtered = places.filter(p => {
+      const hay = [p.nom, p.type, p.commentaire, p.adresse, p.ville, p.cp, p.pays]
+        .map(v => (v || "").toString().toLowerCase())
+        .join(" ");
+      return hay.includes(q);
+    });
+    renderList(filtered);
+  });
+
+  // ----- démarrage -----
+  loadFromSupabase();
 
 }); // DOMContentLoaded
 </script>
