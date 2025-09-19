@@ -17,7 +17,19 @@ Sans clé, on bascule automatiquement sur Leaflet 2D très premium.
 <link id="maplibre-css" rel="stylesheet" href="https://unpkg.com/maplibre-gl@3.6.1/dist/maplibre-gl.css" disabled>
 <script id="maplibre-js" src="https://unpkg.com/maplibre-gl@3.6.1/dist/maplibre-gl.js" defer></script>
 
+<!-- === Supabase Configuration === -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  // ⚠️ Remplace les valeurs ci-dessous par celles de ton projet Supabase
+  const SUPABASE_URL = "https://fcronugfxklwygnchuuu.supabase.co";    // <- Project URL
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjcm9udWdmeGtsd3lnbmNodXV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc3MDg5ODksImV4cCI6MjA3MzI4NDk4OX0.-J89Sbz2POG0ks7oS5odeq3SqKRafA1L8ORl6fHZakk";          // <- anon public key
+
+  const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+</script>
+<!-- === /Supabase Configuration === -->
+
 <style>
+
 :root{
   --gold:#c9a227; --white:#fff; --gray:#f7f7f7; --black:#0e0e0e;
   --shadow-sm:0 3px 10px rgba(0,0,0,.08);
@@ -158,7 +170,7 @@ footer .contact{ color:var(--gold); font-weight:900; letter-spacing:.2px; font-s
 
 <!-- FOOTER CONTACT -->
 <footer>
-  <div class="contact">Pour nous contacter : AllergoZyme — Label &amp; certification. Ensemble, sécurisons vos assiettes.</div>
+  <div class="contact">Pour nous contacter : allergozymepro@gmail.com — Label &amp; certification. Ensemble, sécurisons vos assiettes.</div>
 </footer>
 
 <script>
