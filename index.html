@@ -23,7 +23,6 @@ Sans clé, on bascule automatiquement sur Leaflet 2D très premium.
 <script id="maplibre-js" src="https://unpkg.com/maplibre-gl@3.6.1/dist/maplibre-gl.js" defer></script>
 
 <!-- === Supabase Configuration === -->
-<!-- === Supabase Configuration === -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
   const SUPABASE_URL = "https://fcronugfxklwygnchuuu.supabase.co";
@@ -32,7 +31,6 @@ Sans clé, on bascule automatiquement sur Leaflet 2D très premium.
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 </script>
 
-<!-- === /Supabase Configuration === -->
 
 <style>
 
@@ -87,7 +85,7 @@ html,body{height:100%;overflow:hidden;background:var(--white);color:var(--black)
 .fab:hover{ background:#b18e1e }
 
 /* BOTTOM FILTERS (juste au-dessus du footer) */
-.bottom-filters{ position:fixed; left:0; right:0; bottom:calc(env(safe-area-inset-bottom) + 56px); display:flex; justify-content:center; align-items:center; gap:10px; overflow-x:auto; -webkit-overflow-scrolling:touch; white-space:nowrap; scroll-snap-type:x proximity; background:rgba(255,255,255,.92); border-radius:18px; padding:8px 10px; box-shadow:var(--shadow-md); backdrop-filter:blur(6px); z-index:1200 }
+.bottom-filters{ position:fixed; left:0; right:0; bottom:0; display:flex; justify-content:center; align-items:center; gap:10px; overflow-x:auto; -webkit-overflow-scrolling:touch; white-space:nowrap; scroll-snap-type:x proximity; background:rgba(255,255,255,.92); border-radius:18px; padding:8px 10px; box-shadow:var(--shadow-md); backdrop-filter:blur(6px); z-index:1200 }
 .bottom-filters::-webkit-scrollbar{ height:0; width:0 }
 .bottom-filters{ scrollbar-width:none }
 .bottom-filters button{ flex:0 0 auto; scroll-snap-align:center; border:1px solid var(--gold); background:transparent; color:var(--gold); font-weight:800; font-size:13px; padding:7px 12px; border-radius:999px; cursor:pointer; transition:.2s }
@@ -433,21 +431,36 @@ locateBtn.addEventListener('click', ()=>{
   }, ()=> alert('Impossible de récupérer la position.'), { enableHighAccuracy:true, timeout:12000, maximumAge:0 });
 });
 
-/******************************
- * FILTRES BAS + RECHERCHE
- ******************************/
-document.querySelectorAll('#bottomFilters button').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    document.querySelectorAll('#bottomFilters button').forEach(b=>b.classList.remove('active'));
+/* ========================================
+   FILTRES BAS + RECHERCHE
+   ======================================== */
+document.querySelectorAll('#bottomFilters button').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    // Retire la classe active de tous les boutons
+    document.querySelectorAll('#bottomFilters button')
+      .forEach((b) => b.classList.remove('active'));
+
+    // Ajoute la classe active au bouton cliqué
     btn.classList.add('active');
+
+    // Met à jour le filtre par type puis relance l'affichage
     typeFilter = btn.dataset.type;
     render(places);
   });
 });
 
-top20ToggleEl.addEventListener('click', ()=>{ showTop20Only = !showTop20Only; top20ToggleEl.classList.toggle('on', showTop20Only); render(places); });
-searchInputEl.addEventListener('input', ()=>{ searchTerm = searchInputEl.value; render(places); });
+// Bouton "Top 20"
+top20ToggleEl.addEventListener('click', () => {
+  showTop20Only = !showTop20Only;
+  top20ToggleEl.classList.toggle('on', showTop20Only);
+  render(places);
+});
 
+// Champ de recherche
+searchInputEl.addEventListener('input', () => {
+  searchTerm = searchInputEl.value.trim();
+  render(places);
+});
 
 /******************************
  * INIT
