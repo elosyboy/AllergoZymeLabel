@@ -12,13 +12,11 @@
 <link rel="stylesheet" href="https://unpkg.com/esri-leaflet-geocoder/dist/esri-leaflet-geocoder.css">
 <script src="https://unpkg.com/esri-leaflet-geocoder"></script>
 
-<!-- === Supabase Configuration === -->
-
+<!-- Supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
   const SUPABASE_URL = "https://fcronugfxklwygnchuuu.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjcm9udWdmeGtsd3lnbmNodXV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc3MDg5ODksImV4cCI6MjA3MzI4NDk4OX0.-J89Sbz2POG0ks7oS5odeq3SqKRafA1L8ORl6fHZakk";
-
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 </script>
 
@@ -143,8 +141,6 @@ input,textarea,select{
 
 <script>
 document.addEventListener("DOMContentLoaded", async () => {
-
-  // --- Vérif login admin ---
   if(localStorage.getItem("admin_logged")!=="true"){
     window.location.href="admin-login.html";
   }
@@ -153,13 +149,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.location.href="admin-login.html";
   };
 
-  let places = [];
-  let editingId = null;
-  let tempMarker = null;
-  let markers = [];
+  let places = [], editingId = null, tempMarker = null, markers = [];
 
   // =================== Carte ===================
-  const map=L.map("map",{minZoom:2,maxZoom:19,maxBounds:[[-85,-180],[85,180]],maxBoundsViscosity:1.0}).setView([20,0],2);
+  const map=L.map("map",{minZoom:2,maxZoom:19}).setView([20,0],2);
   L.esri.basemapLayer("Imagery").addTo(map);
   L.esri.basemapLayer("ImageryLabels").addTo(map);
 
@@ -173,6 +166,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const geocoder=L.esri.Geocoding.geocodeService();
 
+  // =================== Form click sur carte ===================
   map.on("click",e=>{
     const {lat,lng}=e.latlng;
     if(tempMarker) map.removeLayer(tempMarker);
@@ -229,7 +223,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const pays=document.getElementById("pays").value.trim();
     const top20=document.getElementById("top20").value==="true";
     if(!nom || !type){alert("Nom et type requis");return;}
-    if(isNaN(lat)||isNaN(lng)){alert("Cliquez sur la carte pour choisir un emplacement.");return;}
+    if(isNaN(lat)||isNaN(lng)){alert("Cliquez sur la carte.");return;}
     const photos=await readFilesAsDataURLs(document.getElementById("photo").files);
 
     let error;
@@ -263,7 +257,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         <div class="place-actions">
           <button class="btn btn-green edit">Modifier</button>
           <button class="btn btn-red del">Supprimer</button>
-          <button class="btn btn-blue toggle">${p.show?'Retirer de la carte':'Afficher sur la carte'}</button>
+          <button class="btn btn-blue toggle">${p.show?'Retirer':'Afficher'}</button>
           <button class="btn btn-ghost top20">${p.top20?'Retirer du Top 20':'Ajouter au Top 20'}</button>
         </div>
       </div>`;
@@ -297,6 +291,44 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
+  // =================== Filtrage Top20 par ville ===================
+  function renderTop20ByCity(city){
+    if(!city) return;
+    const list = places.filter(p =>
+      p.top20 && p.ville && p.ville.toLowerCase() === city.toLowerCase()
+    );
+    markers.forEach(m=>map.removeLayer(m)); markers=[];
+    list.forEach(p=>{
+      const m=L.marker([p.lat,p.lng],{icon:logoIcon}).addTo(map);
+      m.bindPopup(`<b>${escapeHTML(p.nom)}</b><br/>${escapeHTML(p.adresse||"")}`);
+      markers.push(m);
+    });
+    console.log("Affichage Top 20 pour", city, list);
+  }
+
+  // Détection automatique par zoom/déplacement
+  map.on("moveend", () => {
+    const center = map.getCenter();
+    geocoder.reverse().latlng(center).run((err,res)=>{
+      if(err||!res||!res.address) return;
+      const city = res.address.City;
+      if(city) renderTop20ByCity(city);
+    });
+  });
+
+  // Détection via géolocalisation
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(pos=>{
+      const lat=pos.coords.latitude, lng=pos.coords.longitude;
+      map.setView([lat,lng],14);
+      geocoder.reverse().latlng([lat,lng]).run((err,res)=>{
+        if(err||!res||!res.address) return;
+        const city=res.address.City;
+        if(city) renderTop20ByCity(city);
+      });
+    });
+  }
+
   // =================== Actions ===================
   function startEdit(id){
     const p=places.find(x=>x.id===id);if(!p)return;
@@ -311,7 +343,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   async function deletePlace(id){
-    if(!confirm("Supprimer cet établissement ?")) return;
+    if(!confirm("Supprimer ?")) return;
     const { error } = await supabase.from('places').delete().eq('id', id);
     if(error){ console.error(error); alert("Erreur suppression"); return; }
     loadFromSupabase();
@@ -326,10 +358,25 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   async function toggleTop20(id){
-    const p=places.find(x=>x.id===id);
-    if(!p)return;
-    const { error } = await supabase.from('places').update({ top20: !p.top20 }).eq('id', id);
-    if(error){ console.error(error); alert("Erreur mise à jour"); return; }
+    const p = places.find(x => x.id === id);
+    if(!p) return;
+    if (!p.top20) {
+      const count = places.filter(x => 
+        x.ville && p.ville && x.ville.toLowerCase() === p.ville.toLowerCase() && x.top20
+      ).length;
+      if (count >= 20) {
+        alert("⚠️ Déjà 20 établissements Top 20 à " + p.ville);
+        return;
+      }
+    }
+    const { error } = await supabase.from('places')
+      .update({ top20: !p.top20 })
+      .eq('id', id);
+    if (error) {
+      console.error(error);
+      alert("Erreur mise à jour");
+      return;
+    }
     loadFromSupabase();
   }
 
@@ -337,9 +384,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     const q = e.target.value.trim().toLowerCase();
     if (!q) { renderList(); return; }
     const filtered = places.filter(p => {
-      const hay = [p.nom, p.type, p.commentaire, p.adresse, p.ville, p.cp, p.pays]
-        .map(v => (v || "").toString().toLowerCase())
-        .join(" ");
+      const hay = [p.nom,p.type,p.commentaire,p.adresse,p.ville,p.cp,p.pays]
+        .map(v => (v||"").toString().toLowerCase()).join(" ");
       return hay.includes(q);
     });
     renderList(filtered);
@@ -347,7 +393,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // ----- démarrage -----
   loadFromSupabase();
-
 }); // DOMContentLoaded
 </script>
 </body>
