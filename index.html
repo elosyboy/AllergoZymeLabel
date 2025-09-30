@@ -5,8 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <meta name="robots" content="index, follow">
 <meta name="description" content="AllergoZyme Label référence les établissements sécurisés pour les allergiques. Carte mondiale et informations vérifiées.">
+<meta name="google-site-verification" content="f8u7ycqfQYp46mY-HvWilko9yeh_iRwOXGnmJcMt4Fc" />
 <title>AllergoZymeLabel — Carte mondiale</title>
-<link rel="icon" type="image/png" href="logo2.png"/>
+<link rel="icon" type="image/png" href="logo2.png">
 
 <!-- Leaflet -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -17,52 +18,79 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
   const SUPABASE_URL = "https://fcronugfxklwygnchuuu.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjcm9udWdmeGtsd3lnbmNodXV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc3MDg5ODksImV4cCI6MjA3MzI4NDk4OX0.-J89Sbz2POG0ks7oS5odeq3SqKRafA1L8ORl6fHZakk";
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 </script>
 
 <style>
-:root{--gold:#c9a227;--white:#fff;--black:#0e0e0e;--shadow-md:0 8px 22px rgba(0,0,0,.16)}
-html,body{height:100%;margin:0;font-family:"Inter",sans-serif;background:#fff}
-#map{position:absolute;inset:0}
-.logo{position:absolute;top:14px;left:50%;transform:translateX(-50%);z-index:1200}
-.logo img{height:56px;filter:drop-shadow(0 5px 8px rgba(0,0,0,.12))}
-.fab{position:absolute;right:16px;bottom:110px;z-index:1200;background:var(--gold);color:#fff;border:none;padding:12px 18px;border-radius:999px;box-shadow:var(--shadow-md);cursor:pointer;font-weight:800;font-size:15px}
-.bottom-filters{position:fixed;left:50%;transform:translateX(-50%);bottom:20px;display:flex;gap:10px;background:rgba(255,255,255,.9);border-radius:18px;padding:8px 12px;box-shadow:var(--shadow-md);backdrop-filter:blur(6px);z-index:1200}
-.bottom-filters button{border:1px solid var(--gold);background:transparent;color:var(--gold);font-weight:800;font-size:13px;padding:7px 12px;border-radius:999px;cursor:pointer}
-.bottom-filters button.active,.bottom-filters button:hover{background:var(--gold);color:#fff}
-.place-overlay{position:absolute;left:50%;bottom:100px;transform:translateX(-50%);z-index:1300;display:none;width:min(92vw,560px)}
-.place-overlay__media{position:relative;width:100%;height:240px;border-radius:18px;overflow:hidden;background:#eee center/cover no-repeat}
-.place-overlay__badge{position:absolute;top:10px;left:10px;background:#fff;color:var(--gold);border:1px solid var(--gold);font-size:12px;font-weight:800;padding:6px 10px;border-radius:999px}
-.place-overlay__info{position:absolute;right:10px;left:10px;bottom:10px;display:flex;justify-content:space-between;gap:10px;align-items:flex-end}
-.info{background:rgba(255,255,255,.92);border-radius:14px;padding:10px 12px}
-.info b{color:var(--gold);font-size:15px}
-.votes{display:flex;gap:8px;align-items:center;background:rgba(255,255,255,.92);padding:6px 10px;border-radius:12px}
-.vote-btn{border:none;border-radius:999px;padding:6px 10px;cursor:pointer;font-weight:800}
-.vote-btn.up{color:#2e7d32}
-.vote-btn.down{color:#c62828}
-.marker-icon{width:52px;height:52px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid var(--gold)}
-.marker-icon img{width:30px;height:30px}
+:root{
+  --gold:#c9a227; --white:#fff; --black:#0e0e0e;
+  --shadow-md:0 8px 22px rgba(0,0,0,.16);
+  --shadow-lg:0 18px 40px rgba(0,0,0,.20);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;background:var(--white);color:var(--black);font-family:"Inter", "Segoe UI", Roboto, Arial, sans-serif}
+
+/* MAP FULLSCREEN */
+.app{display:flex; height:100vh; width:100vw}
+.map-wrap{position:relative; flex:1;}
+#map{position:absolute; inset:0}
+
+/* FLOATING UI */
+.logo{ position:absolute; top:14px; left:50%; transform:translateX(-50%); z-index:1200; }
+.logo img{ height:56px; filter:drop-shadow(0 5px 8px rgba(0,0,0,.12)) }
+
+.fab{ position:absolute; right:16px; bottom:110px; z-index:1200; background:var(--gold); color:#fff; border:none; padding:12px 18px; border-radius:999px; box-shadow:var(--shadow-md); cursor:pointer; font-weight:800; font-size:15px }
+.fab:hover{ background:#b18e1e }
+
+/* BOTTOM FILTERS */
+.bottom-filters{ position:fixed; left:0; right:0; bottom:0; display:flex; justify-content:center; gap:10px; background:rgba(255,255,255,.92); border-radius:18px; padding:8px 10px; box-shadow:var(--shadow-md); backdrop-filter:blur(6px); z-index:1200 }
+.bottom-filters button{ border:1px solid var(--gold); background:transparent; color:var(--gold); font-weight:800; font-size:13px; padding:7px 12px; border-radius:999px; cursor:pointer; transition:.2s }
+.bottom-filters button:hover,.bottom-filters button.active{ background:var(--gold); color:#fff }
+
+/* OVERLAY (fiche) */
+.place-overlay{ position:absolute; left:50%; bottom:130px; transform:translateX(-50%); z-index:1300; display:none; width:min(92vw, 560px) }
+.place-overlay__media{ position:relative; width:100%; height:260px; border-radius:18px; overflow:hidden; box-shadow:var(--shadow-lg); background:#eee center/cover no-repeat }
+.place-overlay__badge{ position:absolute; top:10px; left:10px; background:rgba(255,255,255,.92); color:var(--gold); border:1px solid var(--gold); font-size:12px; font-weight:800; padding:6px 10px; border-radius:999px; }
+.place-overlay__info{ position:absolute; right:10px; left:10px; bottom:10px; display:flex; justify-content:space-between; gap:10px; align-items:flex-end }
+
+.info{background:rgba(255,255,255,.92); border:1px solid #eee; border-radius:14px; padding:10px 12px; max-width:78%}
+.info b{ color:var(--gold); font-size:15px }
+.info .addr{ font-size:12px; color:#444; margin:2px 0 4px }
+.info .comment{ font-size:13px; color:#222 }
+
+.votes{display:flex; gap:8px; align-items:center; background:rgba(255,255,255,.92); border:1px solid #eee; padding:8px 10px; border-radius:12px}
+.vote-btn{display:flex; align-items:center; gap:6px; font-size:13px; font-weight:800; border:none; cursor:pointer; border-radius:999px; padding:6px 10px; background:#fff; color:#333; border:1px solid #ddd }
+.vote-btn.up{ color:#2e7d32; border-color:#cde7cf }
+.vote-btn.down{ color:#c62828; border-color:#f3cccc }
+
+/* MARKERS */
+.marker-icon{ width:52px; height:52px; background:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid var(--gold); box-shadow:0 6px 16px rgba(0,0,0,.20) }
+.marker-icon img{ width:30px; height:30px }
 </style>
 </head>
 <body>
-<div id="map"></div>
-<div class="logo"><img src="logo.png" alt="AllergoZyme"/></div>
-<button class="fab" id="locateBtn">📍 Localiser</button>
+<div class="app">
+  <div class="map-wrap">
+    <div class="logo"><img src="logo.png" alt="AllergoZyme"/></div>
+    <div id="map"></div>
+    <button class="fab" id="locateBtn">📍 Localiser</button>
 
-<!-- Overlay -->
-<div class="place-overlay" id="placeOverlay">
-  <div class="place-overlay__media" id="ovMedia">
-    <div class="place-overlay__badge" id="ovType">Type</div>
-    <div class="place-overlay__info">
-      <div class="info">
-        <b id="ovName">Nom</b>
-        <div id="ovAddr"></div>
-        <div id="ovComment"></div>
-      </div>
-      <div class="votes">
-        <button class="vote-btn up" id="ovUpBtn">👍 <span id="ovUp">0</span></button>
-        <button class="vote-btn down" id="ovDownBtn">👎 <span id="ovDown">0</span></button>
+    <!-- Overlay -->
+    <div class="place-overlay" id="placeOverlay">
+      <div class="place-overlay__media" id="ovMedia">
+        <div class="place-overlay__badge" id="ovType">Type</div>
+        <div class="place-overlay__info">
+          <div class="info">
+            <b id="ovName">Nom</b>
+            <div class="addr" id="ovAddr">Adresse</div>
+            <div class="comment" id="ovComment">Commentaire</div>
+          </div>
+          <div class="votes">
+            <button class="vote-btn up" id="ovUpBtn">👍 <span id="ovUp">0</span></button>
+            <button class="vote-btn down" id="ovDownBtn">👎 <span id="ovDown">0</span></button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -79,57 +107,109 @@ html,body{height:100%;margin:0;font-family:"Inter",sans-serif;background:#fff}
 </div>
 
 <script>
-let map,places=[],markers=[],typeFilter="all",currentOverlayId=null;
+/* Local storage votes */
+const VOTES_KEY = "allergozyme_votes_v1";
+let votes = JSON.parse(localStorage.getItem(VOTES_KEY) || "{}");
+const getVotes = id => votes[id] || {up:0, down:0};
+const setVotes = (id, up, down) => {
+  votes[id] = {up, down};
+  localStorage.setItem(VOTES_KEY, JSON.stringify(votes));
+};
+const USER_VOTES_KEY = "allergozyme_user_votes_v1";
+let userVotes = JSON.parse(localStorage.getItem(USER_VOTES_KEY) || "{}");
+const hasUserVoted = id => !!userVotes[id];
+const markUserVoted = (id, type)=> {
+  userVotes[id] = type;
+  localStorage.setItem(USER_VOTES_KEY, JSON.stringify(userVotes));
+};
+
+/* Map init */
+let map, markers=[];
 function initMap(){
-  map=L.map("map",{
-    worldCopyJump:true,
-    minZoom:2,
-    maxZoom:19,
-    maxBounds:[[-85,-180],[85,180]],
-    maxBoundsViscosity:1.0
-  }).setView([20,0],2);
+  map = L.map("map", { zoomControl:true, minZoom:2, maxZoom:19 })
+    .setView([20,0], 2);
   L.esri.basemapLayer("Imagery").addTo(map);
   L.esri.basemapLayer("ImageryLabels").addTo(map);
+  map.on('click', closeOverlay);
 }
+initMap();
+
+/* Render */
 function buildMarker(p){
-  const icon=L.divIcon({html:`<div class="marker-icon"><img src="logo.png"/></div>`,iconSize:[52,52],className:""});
-  const m=L.marker([p.lat,p.lng],{icon}).addTo(map);
-  m.on("click",()=>openOverlay(p));
-  markers.push(m);
+  const wrapper = `<div class="marker-icon"><img src="logo.png"/></div>`;
+  const icon = L.divIcon({ html:wrapper, iconSize:[52,52], className:'' });
+  const marker = L.marker([p.lat,p.lng], {icon}).addTo(map);
+  marker.on('click', ()=>openOverlay(p));
+  markers.push(marker);
 }
-function clearMarkers(){markers.forEach(m=>map.removeLayer(m));markers=[];}
-function render(list){clearMarkers();(list||[]).forEach(p=>buildMarker(p));}
+function clearMarkers(){ markers.forEach(m=>map.removeLayer(m)); markers=[]; }
+function render(list){
+  clearMarkers();
+  let filtered=list;
+  if(typeFilter!=="all") filtered=filtered.filter(p=>(p.type||"").toLowerCase()===typeFilter);
+  filtered.forEach(buildMarker);
+}
+
+/* Overlay */
+const overlayEl=document.getElementById("placeOverlay");
+const ovMedia=document.getElementById("ovMedia");
+const ovType=document.getElementById("ovType");
+const ovName=document.getElementById("ovName");
+const ovAddr=document.getElementById("ovAddr");
+const ovComment=document.getElementById("ovComment");
+const ovUp=document.getElementById("ovUp");
+const ovDown=document.getElementById("ovDown");
+let currentOverlayId=null;
 function openOverlay(p){
   currentOverlayId=p.id;
-  document.getElementById("ovMedia").style.backgroundImage=`url('${p.photos?.[0]||"logo.png"}')`;
-  document.getElementById("ovType").textContent=p.type||"Autre";
-  document.getElementById("ovName").textContent=p.nom||"";
-  document.getElementById("ovAddr").textContent=p.adresse||"";
-  document.getElementById("ovComment").textContent=p.commentaire||"";
-  document.getElementById("placeOverlay").style.display="block";
+  ovMedia.style.backgroundImage = p.photos?`url('${p.photos[0]}')`:`url('logo.png')`;
+  ovType.textContent=p.type||"Autre";
+  ovName.textContent=p.nom||"";
+  ovAddr.textContent=[p.adresse,p.ville,p.cp,p.pays].filter(Boolean).join(" — ");
+  ovComment.textContent=p.commentaire||"";
+  const v=getVotes(p.id); ovUp.textContent=v.up; ovDown.textContent=v.down;
+  overlayEl.style.display="block";
 }
-document.getElementById("locateBtn").addEventListener("click",()=>{
-  if(navigator.geolocation){
-    navigator.geolocation.getCurrentPosition(pos=>{
-      map.setView([pos.coords.latitude,pos.coords.longitude],14);
-    });
-  }
-});
+function closeOverlay(){ overlayEl.style.display="none"; currentOverlayId=null; }
+
+/* Votes */
+document.getElementById("ovUpBtn").onclick=()=>{
+  if(!currentOverlayId||hasUserVoted(currentOverlayId))return;
+  let v=getVotes(currentOverlayId); v.up++; setVotes(currentOverlayId,v.up,v.down);
+  markUserVoted(currentOverlayId,"up"); ovUp.textContent=v.up;
+};
+document.getElementById("ovDownBtn").onclick=()=>{
+  if(!currentOverlayId||hasUserVoted(currentOverlayId))return;
+  let v=getVotes(currentOverlayId); v.down++; setVotes(currentOverlayId,v.up,v.down);
+  markUserVoted(currentOverlayId,"down"); ovDown.textContent=v.down;
+};
+
+/* Geoloc */
+document.getElementById("locateBtn").onclick=()=>{
+  if(!navigator.geolocation) return alert("Géolocalisation non supportée.");
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const {latitude,longitude}=pos.coords;
+    map.setView([latitude,longitude],14);
+    L.circle([latitude,longitude],{radius:250,color:"#c9a227",fillColor:"#c9a227",fillOpacity:.25}).addTo(map);
+  },()=>alert("Impossible de récupérer la position."));
+};
+
+/* Filters */
+let typeFilter="all", places=[];
 document.querySelectorAll("#bottomFilters button").forEach(btn=>{
-  btn.addEventListener("click",()=>{
+  btn.onclick=()=>{
     document.querySelectorAll("#bottomFilters button").forEach(b=>b.classList.remove("active"));
-    btn.classList.add("active");
-    typeFilter=btn.dataset.type;
-    const filtered=typeFilter==="all"?places:places.filter(p=>(p.type||"").toLowerCase()===typeFilter);
-    render(filtered);
-  });
+    btn.classList.add("active"); typeFilter=btn.dataset.type; render(places);
+  };
 });
-initMap();
-(async()=>{
-  const {data}=await supabase.from("places").select("*");
-  places=data||[];
-  render(places);
-})();
+
+/* Load from supabase */
+async function loadFromSupabase(){
+  const {data,error}=await supabase.from("places").select("*");
+  if(error){ console.error(error); return; }
+  places=data||[]; render(places);
+}
+loadFromSupabase();
 </script>
 </body>
 </html>

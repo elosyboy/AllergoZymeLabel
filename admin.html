@@ -1,78 +1,79 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>AllergoZymeLabel — Admin</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>AllergoZymeLabel — Admin</title>
 
-<!-- Leaflet + Esri -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/esri-leaflet"></script>
-<link rel="stylesheet" href="https://unpkg.com/esri-leaflet-geocoder/dist/esri-leaflet-geocoder.css">
-<script src="https://unpkg.com/esri-leaflet-geocoder"></script>
+  <!-- Leaflet + Esri -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/esri-leaflet"></script>
+  <link rel="stylesheet" href="https://unpkg.com/esri-leaflet-geocoder/dist/esri-leaflet-geocoder.css">
+  <script src="https://unpkg.com/esri-leaflet-geocoder"></script>
 
-<!-- Supabase -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script>
-  const SUPABASE_URL = "https://fcronugfxklwygnchuuu.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjcm9udWdmeGtsd3lnbmNodXV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc3MDg5ODksImV4cCI6MjA3MzI4NDk4OX0.-J89Sbz2POG0ks7oS5odeq3SqKRafA1L8ORl6fHZakk";
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-</script>
+  <!-- === Supabase Configuration === -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script>
+    const SUPABASE_URL = "https://fcronugfxklwygnchuuu.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjcm9udWdmeGtsd3lnbmNodXV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc3MDg5ODksImV4cCI6MjA3MzI4NDk4OX0.-J89Sbz2POG0ks7oS5odeq3SqKRafA1L8ORl6fHZakk";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  </script>
 
-<style>
-:root{
-  --gold:#c9a227; --gray:#f7f7f7; --black:#111;
-  --shadow-sm:0 3px 10px rgba(0,0,0,0.08);
-  --shadow-md:0 8px 22px rgba(0,0,0,0.15);
-}
-*{margin:0;padding:0;box-sizing:border-box}
-html,body{height:100%;overflow:hidden;background:#fff;color:var(--black);font-family:"Inter","Segoe UI",Roboto,Arial,sans-serif}
+  <style>
+    :root{
+      --gold:#c9a227; --gray:#f7f7f7; --black:#111;
+      --shadow-sm:0 3px 10px rgba(0,0,0,0.08);
+      --shadow-md:0 8px 22px rgba(0,0,0,0.15);
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{height:100%;overflow:hidden;background:#fff;color:var(--black);font-family:"Inter","Segoe UI",Roboto,Arial,sans-serif}
 
-.app{display:grid; grid-template-columns:360px 1fr 380px; height:100vh;}
-.left-panel,.right-panel{background:var(--gray); padding:20px; overflow-y:auto;}
-#map{position:relative; width:100%; height:100%;}
+    .app{display:grid; grid-template-columns:360px 1fr 380px; height:100vh;}
+    .left-panel,.right-panel{background:var(--gray); padding:20px; overflow-y:auto;}
+    #map{position:relative; width:100%; height:100%;}
 
-.title{color:var(--gold); font-weight:900; font-size:20px; margin-bottom:12px;}
-label{font-weight:600;margin-top:12px;display:block;}
-input,textarea,select{
-  width:100%;padding:10px;border:1px solid #ccc;
-  border-radius:8px;background:#fff;margin-top:4px;font-size:14px;
-}
-.row{display:flex;gap:10px;}
-.row>div{flex:1;}
-.actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
-.btn{padding:10px 14px;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:14px;}
-.btn-primary{background:var(--gold);color:#fff;}
-.btn-ghost{background:#fff;border:1px solid #ddd;}
+    .title{color:var(--gold); font-weight:900; font-size:20px; margin-bottom:12px;}
+    label{font-weight:600;margin-top:12px;display:block;}
+    input,textarea,select{
+      width:100%;padding:10px;border:1px solid #ccc;
+      border-radius:8px;background:#fff;margin-top:4px;font-size:14px;
+    }
+    .row{display:flex;gap:10px;}
+    .row>div{flex:1;}
+    .actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+    .btn{padding:10px 14px;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:14px;}
+    .btn-primary{background:var(--gold);color:#fff;}
+    .btn-ghost{background:#fff;border:1px solid #ddd;}
 
-.right-head{display:flex;gap:10px;align-items:center;margin-bottom:16px;}
-.right-head input{flex:1; padding:10px; border-radius:8px; border:1px solid #ccc;}
-.logout{margin-left:auto;}
-.place-item{
-  background:#fff; border-radius:12px; padding:12px;
-  box-shadow:var(--shadow-sm); display:flex; gap:12px; margin-bottom:12px;
-}
-.place-thumb{ width:76px; height:76px; border-radius:8px; object-fit:cover; background:#eee; flex:0 0 76px; }
-.place-body{flex:1;}
-.place-body strong{color:var(--gold);font-size:15px;display:block;}
-.place-body small{color:#666;display:block;margin:2px 0 6px;}
-.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;}
-.chip{border:1px solid var(--gold);color:var(--gold);border-radius:999px;padding:4px 8px;font-size:12px;}
-.chip.on{background:var(--gold);color:#fff;}
-.place-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
-.btn-green{background:#4caf50;color:#fff;}
-.btn-red{background:#e53935;color:#fff;}
-.btn-blue{background:#1976d2;color:#fff;}
-.leaflet-popup-content{font-size:14px;}
+    .right-head{display:flex;gap:10px;align-items:center;margin-bottom:16px;}
+    .right-head input{flex:1; padding:10px; border-radius:8px; border:1px solid #ccc;}
+    .logout{margin-left:auto;}
 
-@media (max-width:1100px){
-  .app{grid-template-columns:1fr; grid-template-rows:360px auto 360px;}
-  .left-panel{grid-row:1;}
-  #map{grid-row:2;}
-  .right-panel{grid-row:3;}
-}
-</style>
+    .place-item{
+      background:#fff; border-radius:12px; padding:12px;
+      box-shadow:var(--shadow-sm); display:flex; gap:12px; margin-bottom:12px;
+    }
+    .place-thumb{ width:76px; height:76px; border-radius:8px; object-fit:cover; background:#eee; flex:0 0 76px; }
+    .place-body{flex:1;}
+    .place-body strong{color:var(--gold);font-size:15px;display:block;}
+    .place-body small{color:#666;display:block;margin:2px 0 6px;}
+    .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;}
+    .chip{border:1px solid var(--gold);color:var(--gold);border-radius:999px;padding:4px 8px;font-size:12px;}
+    .chip.on{background:var(--gold);color:#fff;}
+    .place-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
+    .btn-green{background:#4caf50;color:#fff;}
+    .btn-red{background:#e53935;color:#fff;}
+    .btn-blue{background:#1976d2;color:#fff;}
+    .leaflet-popup-content{font-size:14px;}
+
+    @media (max-width:1100px){
+      .app{grid-template-columns:1fr; grid-template-rows:360px auto 360px;}
+      .left-panel{grid-row:1;}
+      #map{grid-row:2;}
+      .right-panel{grid-row:3;}
+    }
+  </style>
 </head>
 <body>
 
@@ -141,6 +142,7 @@ input,textarea,select{
 
 <script>
 document.addEventListener("DOMContentLoaded", async () => {
+  // --- Vérif login admin ---
   if(localStorage.getItem("admin_logged")!=="true"){
     window.location.href="admin-login.html";
   }
@@ -149,24 +151,27 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.location.href="admin-login.html";
   };
 
-  let places = [], editingId = null, tempMarker = null, markers = [];
+  let places = [];
+  let editingId = null;
+  let tempMarker = null;
+  let markers = [];
 
   // =================== Carte ===================
-  const map=L.map("map",{minZoom:2,maxZoom:19}).setView([20,0],2);
+  const map=L.map("map",{minZoom:2,maxZoom:19,maxBounds:[[-85,-180],[85,180]],maxBoundsViscosity:1.0}).setView([20,0],2);
   L.esri.basemapLayer("Imagery").addTo(map);
   L.esri.basemapLayer("ImageryLabels").addTo(map);
 
   const logoIcon=L.divIcon({
-    html:`<div style="width:48px;height:48px;background:#fff;border-radius:50%;
+    html: `<div style="width:48px;height:48px;background:#fff;border-radius:50%;
       display:flex;align-items:center;justify-content:center;
       border:2px solid #c9a227;box-shadow:0 4px 12px rgba(0,0,0,0.15);">
-      <img src="logo.png" style="width:28px;height:28px;"/></div>`,
+      <img src="logo.png" style="width:28px;height:28px;"/>
+    </div>`,
     iconSize:[48,48],className:""
   });
 
   const geocoder=L.esri.Geocoding.geocodeService();
 
-  // =================== Form click sur carte ===================
   map.on("click",e=>{
     const {lat,lng}=e.latlng;
     if(tempMarker) map.removeLayer(tempMarker);
@@ -223,7 +228,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const pays=document.getElementById("pays").value.trim();
     const top20=document.getElementById("top20").value==="true";
     if(!nom || !type){alert("Nom et type requis");return;}
-    if(isNaN(lat)||isNaN(lng)){alert("Cliquez sur la carte.");return;}
+    if(isNaN(lat)||isNaN(lng)){alert("Cliquez sur la carte pour choisir un emplacement.");return;}
     const photos=await readFilesAsDataURLs(document.getElementById("photo").files);
 
     let error;
@@ -244,7 +249,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // =================== Affichage ===================
   function cardHTML(p){
-    const thumb=p.photos&&p.photos[0]?`<img class="place-thumb" src="${p.photos[0]}">`:`<div class="place-thumb"></div>`;
+    const thumb=p.photos&&p.photos[0]
+      ? `<img class="place-thumb" src="${p.photos[0]}">`
+      : `<div class="place-thumb"></div>`;
     return `
       ${thumb}
       <div class="place-body">
@@ -257,7 +264,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         <div class="place-actions">
           <button class="btn btn-green edit">Modifier</button>
           <button class="btn btn-red del">Supprimer</button>
-          <button class="btn btn-blue toggle">${p.show?'Retirer':'Afficher'}</button>
+          <button class="btn btn-blue toggle">${p.show?'Retirer de la carte':'Afficher sur la carte'}</button>
           <button class="btn btn-ghost top20">${p.top20?'Retirer du Top 20':'Ajouter au Top 20'}</button>
         </div>
       </div>`;
@@ -284,48 +291,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     places.forEach(p=>{
       if(p.show){
         const m=L.marker([p.lat,p.lng],{icon:logoIcon}).addTo(map);
-        const photo=p.photos&&p.photos[0]?`<img src="${p.photos[0]}" style="max-width:200px;border-radius:8px;margin-bottom:6px">`:"";
-        m.bindPopup(`${photo}<b>${escapeHTML(p.nom)}</b><br/><small>${escapeHTML(p.type||"")}</small><br/><small>${escapeHTML(p.adresse||"")}</small><br/>${escapeHTML(p.commentaire||"")}`);
+        const photo=p.photos&&p.photos[0]
+          ? `<img src="${p.photos[0]}" style="max-width:200px;border-radius:8px;margin-bottom:6px">`
+          : "";
+        m.bindPopup(`
+          ${photo}
+          <b>${escapeHTML(p.nom)}</b><br/>
+          <small>${escapeHTML(p.type||"")}</small><br/>
+          <small>${escapeHTML(p.adresse||"")}</small><br/>
+          ${escapeHTML(p.commentaire||"")}
+        `);
         markers.push(m);
       }
-    });
-  }
-
-  // =================== Filtrage Top20 par ville ===================
-  function renderTop20ByCity(city){
-    if(!city) return;
-    const list = places.filter(p =>
-      p.top20 && p.ville && p.ville.toLowerCase() === city.toLowerCase()
-    );
-    markers.forEach(m=>map.removeLayer(m)); markers=[];
-    list.forEach(p=>{
-      const m=L.marker([p.lat,p.lng],{icon:logoIcon}).addTo(map);
-      m.bindPopup(`<b>${escapeHTML(p.nom)}</b><br/>${escapeHTML(p.adresse||"")}`);
-      markers.push(m);
-    });
-    console.log("Affichage Top 20 pour", city, list);
-  }
-
-  // Détection automatique par zoom/déplacement
-  map.on("moveend", () => {
-    const center = map.getCenter();
-    geocoder.reverse().latlng(center).run((err,res)=>{
-      if(err||!res||!res.address) return;
-      const city = res.address.City;
-      if(city) renderTop20ByCity(city);
-    });
-  });
-
-  // Détection via géolocalisation
-  if(navigator.geolocation){
-    navigator.geolocation.getCurrentPosition(pos=>{
-      const lat=pos.coords.latitude, lng=pos.coords.longitude;
-      map.setView([lat,lng],14);
-      geocoder.reverse().latlng([lat,lng]).run((err,res)=>{
-        if(err||!res||!res.address) return;
-        const city=res.address.City;
-        if(city) renderTop20ByCity(city);
-      });
     });
   }
 
@@ -343,7 +320,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   async function deletePlace(id){
-    if(!confirm("Supprimer ?")) return;
+    if(!confirm("Supprimer cet établissement ?")) return;
     const { error } = await supabase.from('places').delete().eq('id', id);
     if(error){ console.error(error); alert("Erreur suppression"); return; }
     loadFromSupabase();
@@ -358,25 +335,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   async function toggleTop20(id){
-    const p = places.find(x => x.id === id);
-    if(!p) return;
-    if (!p.top20) {
-      const count = places.filter(x => 
-        x.ville && p.ville && x.ville.toLowerCase() === p.ville.toLowerCase() && x.top20
-      ).length;
-      if (count >= 20) {
-        alert("⚠️ Déjà 20 établissements Top 20 à " + p.ville);
-        return;
-      }
-    }
-    const { error } = await supabase.from('places')
-      .update({ top20: !p.top20 })
-      .eq('id', id);
-    if (error) {
-      console.error(error);
-      alert("Erreur mise à jour");
-      return;
-    }
+    const p=places.find(x=>x.id===id);
+    if(!p)return;
+    const { error } = await supabase.from('places').update({ top20: !p.top20 }).eq('id', id);
+    if(error){ console.error(error); alert("Erreur mise à jour"); return; }
     loadFromSupabase();
   }
 
@@ -384,8 +346,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     const q = e.target.value.trim().toLowerCase();
     if (!q) { renderList(); return; }
     const filtered = places.filter(p => {
-      const hay = [p.nom,p.type,p.commentaire,p.adresse,p.ville,p.cp,p.pays]
-        .map(v => (v||"").toString().toLowerCase()).join(" ");
+      const hay = [p.nom, p.type, p.commentaire, p.adresse, p.ville, p.cp, p.pays]
+        .map(v => (v || "").toString().toLowerCase())
+        .join(" ");
       return hay.includes(q);
     });
     renderList(filtered);
@@ -393,7 +356,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // ----- démarrage -----
   loadFromSupabase();
-}); // DOMContentLoaded
+});
 </script>
+
 </body>
 </html>
