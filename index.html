@@ -37,9 +37,43 @@ html,body{height:100%;overflow:hidden;background:var(--white);color:var(--black)
 .fab{position:absolute;right:16px;bottom:110px;z-index:1200;background:var(--gold);color:#fff;border:none;padding:12px 18px;border-radius:999px;box-shadow:var(--shadow-md);cursor:pointer;font-weight:800;font-size:15px}
 .fab:hover{background:#b18e1e}
 
-.bottom-filters{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;gap:10px;background:rgba(255,255,255,.92);border-radius:18px;padding:8px 10px;box-shadow:var(--shadow-md);backdrop-filter:blur(6px);z-index:1200}
-.bottom-filters button{border:1px solid var(--gold);background:transparent;color:var(--gold);font-weight:800;font-size:13px;padding:7px 12px;border-radius:999px;cursor:pointer;transition:.2s}
-.bottom-filters button:hover,.bottom-filters button.active{background:var(--gold);color:#fff}
+.bottom-filters {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: flex-start;   /* 👈 au lieu de center */
+  gap: 10px;
+  background: rgba(255,255,255,.92);
+  border-radius: 18px;
+  padding: 8px 10px;
+  box-shadow: var(--shadow-md);
+  backdrop-filter: blur(6px);
+  z-index: 1200;
+  overflow-x: auto;              /* 👈 permet de glisser */
+  -webkit-overflow-scrolling: touch; /* 👈 scroll fluide iOS */
+}
+.bottom-filters::-webkit-scrollbar {
+  display: none; /* 👈 pas de scroll visible */
+}
+.bottom-filters button {
+  flex: 0 0 auto; /* 👈 évite que les boutons se compressent */
+  border: 1px solid var(--gold);
+  background: transparent;
+  color: var(--gold);
+  font-weight: 800;
+  font-size: 13px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: .2s;
+}
+.bottom-filters button:hover,
+.bottom-filters button.active {
+  background: var(--gold);
+  color: #fff;
+}
 
 .place-overlay{position:absolute;left:50%;bottom:130px;transform:translateX(-50%);z-index:1300;display:none;width:min(92vw,560px)}
 .place-overlay__media{position:relative;width:100%;height:260px;border-radius:18px;overflow:hidden;box-shadow:var(--shadow-lg);background:#eee center/cover no-repeat}
