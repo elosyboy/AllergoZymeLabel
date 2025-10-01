@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <meta name="robots" content="index, follow">
 <meta name="description" content="AllergoZyme Label référence les établissements sécurisés pour les allergiques. Carte mondiale et informations vérifiées.">
-<meta name="google-site-verification" content="f8u7ycqfQYp46mY-HvWilko9yeh_iRwOXGnmJcMt4Fc" />
 <title>AllergoZymeLabel — Carte mondiale</title>
 <link rel="icon" type="image/png" href="logo2.png">
 
@@ -29,44 +28,34 @@
   --shadow-lg:0 18px 40px rgba(0,0,0,.20);
 }
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{height:100%;overflow:hidden;background:var(--white);color:var(--black);font-family:"Inter", "Segoe UI", Roboto, Arial, sans-serif}
+html,body{height:100%;overflow:hidden;background:var(--white);color:var(--black);font-family:"Inter","Segoe UI",Roboto,Arial,sans-serif}
+.app{display:flex;height:100vh;width:100vw}
+.map-wrap{position:relative;flex:1}
+#map{position:absolute;inset:0}
+.logo{position:absolute;top:14px;left:50%;transform:translateX(-50%);z-index:1200}
+.logo img{height:56px;filter:drop-shadow(0 5px 8px rgba(0,0,0,.12))}
+.fab{position:absolute;right:16px;bottom:110px;z-index:1200;background:var(--gold);color:#fff;border:none;padding:12px 18px;border-radius:999px;box-shadow:var(--shadow-md);cursor:pointer;font-weight:800;font-size:15px}
+.fab:hover{background:#b18e1e}
 
-/* MAP FULLSCREEN */
-.app{display:flex; height:100vh; width:100vw}
-.map-wrap{position:relative; flex:1;}
-#map{position:absolute; inset:0}
+.bottom-filters{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;gap:10px;background:rgba(255,255,255,.92);border-radius:18px;padding:8px 10px;box-shadow:var(--shadow-md);backdrop-filter:blur(6px);z-index:1200}
+.bottom-filters button{border:1px solid var(--gold);background:transparent;color:var(--gold);font-weight:800;font-size:13px;padding:7px 12px;border-radius:999px;cursor:pointer;transition:.2s}
+.bottom-filters button:hover,.bottom-filters button.active{background:var(--gold);color:#fff}
 
-/* FLOATING UI */
-.logo{ position:absolute; top:14px; left:50%; transform:translateX(-50%); z-index:1200; }
-.logo img{ height:56px; filter:drop-shadow(0 5px 8px rgba(0,0,0,.12)) }
+.place-overlay{position:absolute;left:50%;bottom:130px;transform:translateX(-50%);z-index:1300;display:none;width:min(92vw,560px)}
+.place-overlay__media{position:relative;width:100%;height:260px;border-radius:18px;overflow:hidden;box-shadow:var(--shadow-lg);background:#eee center/cover no-repeat}
+.place-overlay__badge{position:absolute;top:10px;left:10px;background:rgba(255,255,255,.92);color:var(--gold);border:1px solid var(--gold);font-size:12px;font-weight:800;padding:6px 10px;border-radius:999px}
+.place-overlay__info{position:absolute;right:10px;left:10px;bottom:10px;display:flex;justify-content:space-between;gap:10px;align-items:flex-end}
+.info{background:rgba(255,255,255,.92);border:1px solid #eee;border-radius:14px;padding:10px 12px;max-width:78%}
+.info b{color:var(--gold);font-size:15px}
+.info .addr{font-size:12px;color:#444;margin:2px 0 4px}
+.info .comment{font-size:13px;color:#222}
+.votes{display:flex;gap:8px;align-items:center;background:rgba(255,255,255,.92);border:1px solid #eee;padding:8px 10px;border-radius:12px}
+.vote-btn{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:800;border:none;cursor:pointer;border-radius:999px;padding:6px 10px;background:#fff;color:#333;border:1px solid #ddd}
+.vote-btn.up{color:#2e7d32;border-color:#cde7cf}
+.vote-btn.down{color:#c62828;border-color:#f3cccc}
 
-.fab{ position:absolute; right:16px; bottom:110px; z-index:1200; background:var(--gold); color:#fff; border:none; padding:12px 18px; border-radius:999px; box-shadow:var(--shadow-md); cursor:pointer; font-weight:800; font-size:15px }
-.fab:hover{ background:#b18e1e }
-
-/* BOTTOM FILTERS */
-.bottom-filters{ position:fixed; left:0; right:0; bottom:0; display:flex; justify-content:center; gap:10px; background:rgba(255,255,255,.92); border-radius:18px; padding:8px 10px; box-shadow:var(--shadow-md); backdrop-filter:blur(6px); z-index:1200 }
-.bottom-filters button{ border:1px solid var(--gold); background:transparent; color:var(--gold); font-weight:800; font-size:13px; padding:7px 12px; border-radius:999px; cursor:pointer; transition:.2s }
-.bottom-filters button:hover,.bottom-filters button.active{ background:var(--gold); color:#fff }
-
-/* OVERLAY (fiche) */
-.place-overlay{ position:absolute; left:50%; bottom:130px; transform:translateX(-50%); z-index:1300; display:none; width:min(92vw, 560px) }
-.place-overlay__media{ position:relative; width:100%; height:260px; border-radius:18px; overflow:hidden; box-shadow:var(--shadow-lg); background:#eee center/cover no-repeat }
-.place-overlay__badge{ position:absolute; top:10px; left:10px; background:rgba(255,255,255,.92); color:var(--gold); border:1px solid var(--gold); font-size:12px; font-weight:800; padding:6px 10px; border-radius:999px; }
-.place-overlay__info{ position:absolute; right:10px; left:10px; bottom:10px; display:flex; justify-content:space-between; gap:10px; align-items:flex-end }
-
-.info{background:rgba(255,255,255,.92); border:1px solid #eee; border-radius:14px; padding:10px 12px; max-width:78%}
-.info b{ color:var(--gold); font-size:15px }
-.info .addr{ font-size:12px; color:#444; margin:2px 0 4px }
-.info .comment{ font-size:13px; color:#222 }
-
-.votes{display:flex; gap:8px; align-items:center; background:rgba(255,255,255,.92); border:1px solid #eee; padding:8px 10px; border-radius:12px}
-.vote-btn{display:flex; align-items:center; gap:6px; font-size:13px; font-weight:800; border:none; cursor:pointer; border-radius:999px; padding:6px 10px; background:#fff; color:#333; border:1px solid #ddd }
-.vote-btn.up{ color:#2e7d32; border-color:#cde7cf }
-.vote-btn.down{ color:#c62828; border-color:#f3cccc }
-
-/* MARKERS */
-.marker-icon{ width:52px; height:52px; background:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid var(--gold); box-shadow:0 6px 16px rgba(0,0,0,.20) }
-.marker-icon img{ width:30px; height:30px }
+.marker-icon{width:52px;height:52px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid var(--gold);box-shadow:0 6px 16px rgba(0,0,0,.20)}
+.marker-icon img{width:30px;height:30px}
 </style>
 </head>
 <body>
@@ -96,7 +85,7 @@ html,body{height:100%;overflow:hidden;background:var(--white);color:var(--black)
   </div>
 </div>
 
-<!-- Filters -->
+<!-- Filtres -->
 <div class="bottom-filters" id="bottomFilters">
   <button data-type="all" class="active">Tous</button>
   <button data-type="restaurant">Restaurant</button>
@@ -107,84 +96,107 @@ html,body{height:100%;overflow:hidden;background:var(--white);color:var(--black)
 </div>
 
 <script>
-/* Local storage votes */
+/* ===== Votes localStorage ===== */
 const VOTES_KEY = "allergozyme_votes_v1";
 let votes = JSON.parse(localStorage.getItem(VOTES_KEY) || "{}");
-const getVotes = id => votes[id] || {up:0, down:0};
-const setVotes = (id, up, down) => {
-  votes[id] = {up, down};
-  localStorage.setItem(VOTES_KEY, JSON.stringify(votes));
-};
+const getVotes = id => votes[id] || { up:0, down:0 };
+const setVotes = (id, up, down) => { votes[id] = { up, down }; localStorage.setItem(VOTES_KEY, JSON.stringify(votes)); };
 const USER_VOTES_KEY = "allergozyme_user_votes_v1";
 let userVotes = JSON.parse(localStorage.getItem(USER_VOTES_KEY) || "{}");
 const hasUserVoted = id => !!userVotes[id];
-const markUserVoted = (id, type)=> {
-  userVotes[id] = type;
-  localStorage.setItem(USER_VOTES_KEY, JSON.stringify(userVotes));
-};
+const markUserVoted = (id, type) => { userVotes[id] = type; localStorage.setItem(USER_VOTES_KEY, JSON.stringify(userVotes)); };
 
-/* Map init */
-let map, markers=[];
+/* ===== Helpers ===== */
+const typeLabel = (t)=>{ const x=(t||"").toLowerCase(); if(!x) return "Autre"; return x.charAt(0).toUpperCase()+x.slice(1)};
+
+/* ===== Map ===== */
+let map, markers=[], places=[], typeFilter="all";
 function initMap(){
-  map = L.map("map", { zoomControl:true, minZoom:2, maxZoom:19 })
-    .setView([20,0], 2);
+  map = L.map("map", { zoomControl:true, minZoom:2, maxZoom:19 }).setView([20,0], 2);
   L.esri.basemapLayer("Imagery").addTo(map);
   L.esri.basemapLayer("ImageryLabels").addTo(map);
-  map.on('click', closeOverlay);
+  map.on('click', closeOverlay); // fermer la fiche en cliquant sur la carte
 }
 initMap();
 
-/* Render */
+/* ===== Normalisation des lignes Supabase -> objet unique =====
+   Tes colonnes actuelles : Nom, type, Commentaire, Adresse, Ville, Cp, Paie, Lat, Lng, Afficher, photos
+   On accepte aussi les variantes minuscules si jamais. */
+function normalizePlace(row){
+  // photos peut être null, string ou array -> on force un array de strings
+  let photos = row.photos;
+  if (typeof photos === "string") { try { photos = JSON.parse(photos); } catch { photos = []; } }
+  if (!Array.isArray(photos)) photos = [];
+
+  return {
+    id: row.id ?? row.Id ?? row.uuid ?? row.UUID,
+    lat: row.lat ?? row.Lat,
+    lng: row.lng ?? row.Lng,
+    type: row.type ?? row.Type ?? "autre",
+    nom: row.nom ?? row.Nom ?? "",
+    commentaire: row.commentaire ?? row.Commentaire ?? "",
+    adresse: row.adresse ?? row.Adresse ?? "",
+    ville: row.ville ?? row.Ville ?? "",
+    cp: row.cp ?? row.Cp ?? "",
+    pays: row.pays ?? row.Pays ?? row.Paie ?? "",
+    show: (row.show ?? row.afficher ?? row.Afficher ?? true) ? true : false,
+    photos
+  };
+}
+
+/* ===== Rendu ===== */
 function buildMarker(p){
-  const wrapper = `<div class="marker-icon"><img src="logo.png"/></div>`;
-  const icon = L.divIcon({ html:wrapper, iconSize:[52,52], className:'' });
-  const marker = L.marker([p.lat,p.lng], {icon}).addTo(map);
-  marker.on('click', ()=>openOverlay(p));
+  if (typeof p.lat !== "number" || typeof p.lng !== "number") return; // ignore si coords manquantes
+  const icon = L.divIcon({ html:'<div class="marker-icon"><img src="logo.png" alt=""></div>', iconSize:[52,52], className:'' });
+  const marker = L.marker([p.lat, p.lng], {icon}).addTo(map);
+  marker.on('click', ()=> openOverlay(p));
   markers.push(marker);
 }
 function clearMarkers(){ markers.forEach(m=>map.removeLayer(m)); markers=[]; }
 function render(list){
   clearMarkers();
-  let filtered=list;
-  if(typeFilter!=="all") filtered=filtered.filter(p=>(p.type||"").toLowerCase()===typeFilter);
+  let filtered = list.filter(p => p.show !== false);
+  if (typeFilter !== "all") filtered = filtered.filter(p => (p.type||"").toLowerCase() === typeFilter);
   filtered.forEach(buildMarker);
 }
 
-/* Overlay */
-const overlayEl=document.getElementById("placeOverlay");
-const ovMedia=document.getElementById("ovMedia");
-const ovType=document.getElementById("ovType");
-const ovName=document.getElementById("ovName");
-const ovAddr=document.getElementById("ovAddr");
-const ovComment=document.getElementById("ovComment");
-const ovUp=document.getElementById("ovUp");
-const ovDown=document.getElementById("ovDown");
-let currentOverlayId=null;
+/* ===== Overlay ===== */
+const overlayEl = document.getElementById("placeOverlay");
+const ovMedia   = document.getElementById("ovMedia");
+const ovType    = document.getElementById("ovType");
+const ovName    = document.getElementById("ovName");
+const ovAddr    = document.getElementById("ovAddr");
+const ovComment = document.getElementById("ovComment");
+const ovUp      = document.getElementById("ovUp");
+const ovDown    = document.getElementById("ovDown");
+let currentOverlayId = null;
+
 function openOverlay(p){
-  currentOverlayId=p.id;
-  ovMedia.style.backgroundImage = p.photos?`url('${p.photos[0]}')`:`url('logo.png')`;
-  ovType.textContent=p.type||"Autre";
-  ovName.textContent=p.nom||"";
-  ovAddr.textContent=[p.adresse,p.ville,p.cp,p.pays].filter(Boolean).join(" — ");
-  ovComment.textContent=p.commentaire||"";
-  const v=getVotes(p.id); ovUp.textContent=v.up; ovDown.textContent=v.down;
-  overlayEl.style.display="block";
+  currentOverlayId = p.id;
+  ovMedia.style.backgroundImage = p.photos && p.photos[0] ? `url('${p.photos[0]}')` : `url('logo.png')`;
+  ovType.textContent    = typeLabel(p.type);
+  ovName.textContent    = p.nom || "Sans nom";
+  ovAddr.textContent    = [p.adresse, p.ville, p.cp, p.pays].filter(Boolean).join(" — ");
+  ovComment.textContent = p.commentaire || "";
+  const v = getVotes(p.id || `${p.lat},${p.lng}`);
+  ovUp.textContent = v.up; ovDown.textContent = v.down;
+  overlayEl.style.display = "block";
 }
 function closeOverlay(){ overlayEl.style.display="none"; currentOverlayId=null; }
 
 /* Votes */
-document.getElementById("ovUpBtn").onclick=()=>{
-  if(!currentOverlayId||hasUserVoted(currentOverlayId))return;
-  let v=getVotes(currentOverlayId); v.up++; setVotes(currentOverlayId,v.up,v.down);
+document.getElementById("ovUpBtn").onclick = ()=>{
+  if(!currentOverlayId || hasUserVoted(currentOverlayId)) return;
+  const v=getVotes(currentOverlayId); v.up++; setVotes(currentOverlayId,v.up,v.down);
   markUserVoted(currentOverlayId,"up"); ovUp.textContent=v.up;
 };
-document.getElementById("ovDownBtn").onclick=()=>{
-  if(!currentOverlayId||hasUserVoted(currentOverlayId))return;
-  let v=getVotes(currentOverlayId); v.down++; setVotes(currentOverlayId,v.up,v.down);
+document.getElementById("ovDownBtn").onclick = ()=>{
+  if(!currentOverlayId || hasUserVoted(currentOverlayId)) return;
+  const v=getVotes(currentOverlayId); v.down++; setVotes(currentOverlayId,v.up,v.down);
   markUserVoted(currentOverlayId,"down"); ovDown.textContent=v.down;
 };
 
-/* Geoloc */
+/* Géolocalisation */
 document.getElementById("locateBtn").onclick=()=>{
   if(!navigator.geolocation) return alert("Géolocalisation non supportée.");
   navigator.geolocation.getCurrentPosition(pos=>{
@@ -194,20 +206,23 @@ document.getElementById("locateBtn").onclick=()=>{
   },()=>alert("Impossible de récupérer la position."));
 };
 
-/* Filters */
-let typeFilter="all", places=[];
+/* Filtres */
 document.querySelectorAll("#bottomFilters button").forEach(btn=>{
   btn.onclick=()=>{
     document.querySelectorAll("#bottomFilters button").forEach(b=>b.classList.remove("active"));
-    btn.classList.add("active"); typeFilter=btn.dataset.type; render(places);
+    btn.classList.add("active");
+    typeFilter = btn.dataset.type;
+    render(places);
   };
 });
 
-/* Load from supabase */
+/* Chargement Supabase */
 async function loadFromSupabase(){
-  const {data,error}=await supabase.from("places").select("*");
-  if(error){ console.error(error); return; }
-  places=data||[]; render(places);
+  // ⚠️ Si ta table s’appelle "Lieux", mets "Lieux" ici. Si c’est "places", laisse "places".
+  const { data, error } = await supabase.from("places").select("*");
+  if(error){ console.error("Erreur lecture Supabase:", error); return; }
+  places = (data || []).map(normalizePlace);
+  render(places);
 }
 loadFromSupabase();
 </script>
